@@ -3,8 +3,10 @@ package com.hardpc.saas.backendapi.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "detalles_venta")
 public class DetalleVenta extends AuditoriaBase {
