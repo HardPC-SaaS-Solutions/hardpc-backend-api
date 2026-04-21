@@ -54,7 +54,7 @@ class DetalleVentaRestControllerTest {
 
         ResponseEntity<DetalleVenta> response = detalleVentaRestController.crear(entrada);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals("/api/detalles-venta/1", response.getHeaders().getLocation().toString());
+        assertEquals("/api/detalles-ventas/1", response.getHeaders().getLocation().toString());
     }
 
     @Test

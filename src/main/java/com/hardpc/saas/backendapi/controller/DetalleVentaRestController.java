@@ -2,6 +2,7 @@ package com.hardpc.saas.backendapi.controller;
 
 import com.hardpc.saas.backendapi.entity.DetalleVenta;
 import com.hardpc.saas.backendapi.service.DetalleVentaService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +11,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/detalles-venta")
+@RequestMapping("/api/detalles-ventas")
 @RequiredArgsConstructor
 public class DetalleVentaRestController {
 
@@ -27,13 +28,13 @@ public class DetalleVentaRestController {
     }
 
     @PostMapping
-    public ResponseEntity<DetalleVenta> crear(@RequestBody DetalleVenta detalleVenta) {
-        DetalleVenta creada = detalleVentaService.crear(detalleVenta);
-        return ResponseEntity.created(URI.create("/api/detalles-venta/" + creada.getIdDetalleVenta())).body(creada);
+    public ResponseEntity<DetalleVenta> crear(@Valid @RequestBody DetalleVenta detalleVenta) {
+        DetalleVenta creado = detalleVentaService.crear(detalleVenta);
+        return ResponseEntity.created(URI.create("/api/detalles-ventas/" + creado.getIdDetalleVenta())).body(creado);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DetalleVenta> actualizar(@PathVariable Long id, @RequestBody DetalleVenta detalleVenta) {
+    public ResponseEntity<DetalleVenta> actualizar(@PathVariable Long id, @Valid @RequestBody DetalleVenta detalleVenta) {
         return ResponseEntity.ok(detalleVentaService.actualizar(id, detalleVenta));
     }
 

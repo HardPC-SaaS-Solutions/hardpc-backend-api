@@ -1,7 +1,6 @@
 package com.hardpc.saas.backendapi.service;
 
 import com.hardpc.saas.backendapi.entity.FormaPago;
-
 import java.util.List;
 
 public interface FormaPagoService {

@@ -2,6 +2,7 @@ package com.hardpc.saas.backendapi.controller;
 
 import com.hardpc.saas.backendapi.entity.FormaPago;
 import com.hardpc.saas.backendapi.service.FormaPagoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,13 +28,13 @@ public class FormaPagoRestController {
     }
 
     @PostMapping
-    public ResponseEntity<FormaPago> crear(@RequestBody FormaPago formaPago) {
-        FormaPago creada = formaPagoService.crear(formaPago);
-        return ResponseEntity.created(URI.create("/api/formas-pago/" + creada.getIdFormaPago())).body(creada);
+    public ResponseEntity<FormaPago> crear(@Valid @RequestBody FormaPago formaPago) {
+        FormaPago creado = formaPagoService.crear(formaPago);
+        return ResponseEntity.created(URI.create("/api/formas-pago/" + creado.getIdFormaPago())).body(creado);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<FormaPago> actualizar(@PathVariable Long id, @RequestBody FormaPago formaPago) {
+    public ResponseEntity<FormaPago> actualizar(@PathVariable Long id, @Valid @RequestBody FormaPago formaPago) {
         return ResponseEntity.ok(formaPagoService.actualizar(id, formaPago));
     }
 

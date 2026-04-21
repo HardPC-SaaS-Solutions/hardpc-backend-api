@@ -76,7 +76,7 @@ class TipoComprobanteRestControllerTest {
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(tcGuardado, response.getBody());
-        assertEquals("/api/tipos-comprobante/1", response.getHeaders().getLocation().toString());
+        assertEquals("/api/tipos-comprobantes/1", response.getHeaders().getLocation().toString());
         verify(tipoComprobanteService).crear(peticionEntrada);
     }
 

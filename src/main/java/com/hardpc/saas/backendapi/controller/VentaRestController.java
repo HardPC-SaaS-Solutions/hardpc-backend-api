@@ -2,6 +2,7 @@ package com.hardpc.saas.backendapi.controller;
 
 import com.hardpc.saas.backendapi.entity.Venta;
 import com.hardpc.saas.backendapi.service.VentaService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,13 +28,13 @@ public class VentaRestController {
     }
 
     @PostMapping
-    public ResponseEntity<Venta> crear(@RequestBody Venta venta) {
-        Venta creada = ventaService.crear(venta);
-        return ResponseEntity.created(URI.create("/api/ventas/" + creada.getIdVenta())).body(creada);
+    public ResponseEntity<Venta> crear(@Valid @RequestBody Venta venta) {
+        Venta creado = ventaService.crear(venta);
+        return ResponseEntity.created(URI.create("/api/ventas/" + creado.getIdVenta())).body(creado);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Venta> actualizar(@PathVariable Long id, @RequestBody Venta venta) {
+    public ResponseEntity<Venta> actualizar(@PathVariable Long id, @Valid @RequestBody Venta venta) {
         return ResponseEntity.ok(ventaService.actualizar(id, venta));
     }
 
