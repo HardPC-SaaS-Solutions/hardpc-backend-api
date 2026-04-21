@@ -1,61 +1,64 @@
 package com.hardpc.saas.backendapi.service.impl;
 
 import com.hardpc.saas.backendapi.entity.IngresoCompra;
-import com.hardpc.saas.backendapi.entity.Proveedor;
 import com.hardpc.saas.backendapi.repository.IngresoCompraRepository;
-import com.hardpc.saas.backendapi.repository.ProveedorRepository;
 import com.hardpc.saas.backendapi.service.IngresoCompraService;
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class IngresoCompraServiceImpl implements IngresoCompraService {
 
     private final IngresoCompraRepository ingresoCompraRepository;
-    private final ProveedorRepository proveedorRepository;
-
-    public IngresoCompraServiceImpl(IngresoCompraRepository ingresoCompraRepository, ProveedorRepository proveedorRepository) {
-        this.ingresoCompraRepository = ingresoCompraRepository;
-        this.proveedorRepository = proveedorRepository;
-    }
 
     @Override
-    public List<IngresoCompra> listarIngresoCompra() {
+    @Transactional(readOnly = true)
+    public List<IngresoCompra> listarTodos() {
         return ingresoCompraRepository.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public IngresoCompra buscarPorId(Long id) {
-        return ingresoCompraRepository.findById(id).orElseThrow(()->new RuntimeException("Ingreso no encontrado"));
+        return ingresoCompraRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingreso de compra no encontrado con id: " + id));
     }
 
     @Override
-    @Transactional
-    public IngresoCompra guardarCompra(IngresoCompra ingreso) {
-
-        /*VALIDAR EL PROVEEDOR*/
-        Proveedor proveedor = proveedorRepository.findById(
-                ingreso.getProveedor().getIdProveedor()).orElseThrow(()->new RuntimeException("Proveedor no encontrado"));
-
-        ingreso.setProveedor(proveedor);
-
-        /*ASIGNAR RELACIONES A LOS DETALLES*/
-
-        if(ingreso.getDetalles()!=null){
-            ingreso.getDetalles().forEach(det ->{
-                det.setIngresoCompra(ingreso);
-            });
-        }
-
-        return ingresoCompraRepository.save(ingreso);
+    public IngresoCompra crear(IngresoCompra ingresoCompra) {
+        ingresoCompra.setIdIngreso(null);
+        return ingresoCompraRepository.save(ingresoCompra);
     }
 
     @Override
-    public void eliminarPorId(Long id) {
-        IngresoCompra ingreso = buscarPorId(id);
-        ingresoCompraRepository.delete(ingreso);
+    public IngresoCompra actualizar(Long id, IngresoCompra ingresoCompra) {
+        IngresoCompra existente = buscarPorId(id);
 
+        existente.setProveedor(ingresoCompra.getProveedor());
+        existente.setTipoComprobante(ingresoCompra.getTipoComprobante());
+        existente.setUsuario(ingresoCompra.getUsuario());
+        existente.setLocal(ingresoCompra.getLocal());
+        existente.setSerieComprobante(ingresoCompra.getSerieComprobante());
+        existente.setNumeroComprobante(ingresoCompra.getNumeroComprobante());
+        existente.setFechaIngreso(ingresoCompra.getFechaIngreso());
+        existente.setImpuesto(ingresoCompra.getImpuesto());
+        existente.setTotalCompra(ingresoCompra.getTotalCompra());
+        existente.setEstadoIngreso(ingresoCompra.getEstadoIngreso());
+        existente.setComprobanteDocUrl(ingresoCompra.getComprobanteDocUrl());
+
+        return ingresoCompraRepository.save(existente);
+    }
+
+    @Override
+    public void eliminar(Long id) {
+        IngresoCompra existente = buscarPorId(id);
+        ingresoCompraRepository.delete(existente);
     }
 }

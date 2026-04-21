@@ -1,56 +1,75 @@
 package com.hardpc.saas.backendapi.entity;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
 import java.math.BigDecimal;
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "ingresos_compras")
 public class IngresoCompra extends AuditoriaBase {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idIngreso;
 
-    @NotBlank
-    @Size(max = 10)
-    @Column(nullable = false, length = 10)
-    private String serieComprobante;
-
-    @NotNull
-    @DecimalMin("0.0") /*valor mayor o igual a este minimo*/
-    @Column(nullable = false,precision = 10,scale = 2) /*precision: numero maximo de digitos/ scale: numeros a la derecha del punto decimal*/
-    private BigDecimal impuesto;
-
-    @NotNull
-    @DecimalMin("0.0") /*valor mayor o igual a este minimo*/
-    @Column(nullable = false,precision = 12,scale = 2) /*precision: numero maximo de digitos/ scale: numeros a la derecha del punto decimal*/
-    private BigDecimal totalCompra;
-
-    @NotBlank
-    @Size (max=20)
-    @Column(nullable = false,length = 20)
-    private String estadoIngreso;
-
-    /*RELACIONES*/
-
-    /*Muchas compras (IngresoCompra) pueden pertenecer a un solo proveedor*/
+    @NotNull(message = "El proveedor es obligatorio")
     @ManyToOne
-    @JoinColumn(name="id_proveedor",nullable = false)
+    @JoinColumn(name = "id_proveedor", nullable = false)
     private Proveedor proveedor;
 
-    /*COLECCIONES*/
+    @NotNull(message = "El tipo de comprobante es obligatorio")
+    @ManyToOne
+    @JoinColumn(name = "id_tipo_comprobante", nullable = false)
+    private TipoComprobante tipoComprobante; // Entidad del módulo de Fabrizio
 
-    /*Un IngresoCompra tiene muchos DetalleIngreso*/
-    @OneToMany(mappedBy = "ingresoCompra", cascade = CascadeType.ALL, orphanRemoval = true)/*CascadeType.ALL: EL CRUD se propagara*/
-    @JsonManagedReference                                                                 /*a las entidades hijas, OrphanRemoval:si un hijo se elimina de la coleccion del padre, se elimina de la db*/
-    private List<DetalleIngreso> detalles;
+    @NotNull(message = "El usuario es obligatorio")
+    @ManyToOne
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
+
+    @NotNull(message = "El local es obligatorio")
+    @ManyToOne
+    @JoinColumn(name = "id_local", nullable = false)
+    private Local local;
+
+    @NotBlank(message = "La serie del comprobante es obligatoria")
+    @Size(max = 20, message = "La serie no puede exceder los 20 caracteres")
+    @Column(name = "serie_comprobante", nullable = false, length = 20)
+    private String serieComprobante;
+
+    @NotBlank(message = "El número del comprobante es obligatorio")
+    @Size(max = 50, message = "El número no puede exceder los 50 caracteres")
+    @Column(name = "numero_comprobante", nullable = false, length = 50)
+    private String numeroComprobante;
+
+    @NotNull(message = "La fecha de ingreso es obligatoria")
+    @Column(name = "fecha_ingreso", nullable = false)
+    private LocalDateTime fechaIngreso;
+
+    @NotNull(message = "El impuesto es obligatorio")
+    @PositiveOrZero(message = "El impuesto no puede ser negativo")
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal impuesto;
+
+    @NotNull(message = "El total de la compra es obligatorio")
+    @PositiveOrZero(message = "El total no puede ser negativo")
+    @Column(name = "total_compra", nullable = false, precision = 12, scale = 2)
+    private BigDecimal totalCompra;
+
+    @NotBlank(message = "El estado del ingreso es obligatorio")
+    @Size(max = 50, message = "El estado no puede exceder los 50 caracteres")
+    @Column(name = "estado_ingreso", nullable = false, length = 50)
+    private String estadoIngreso; // Ejemplo: REGISTRADO, ANULADO
+
+    @Size(max = 255, message = "La URL del documento no puede exceder los 255 caracteres")
+    @Column(name = "comprobante_doc_url", length = 255)
+    private String comprobanteDocUrl;
 }
