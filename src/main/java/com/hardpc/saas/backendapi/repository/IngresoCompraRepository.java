@@ -1,4 +1,4 @@
-package com.hardpc.saas.backendapi.repository.transaccional;
+package com.hardpc.saas.backendapi.repository;
 
 import com.hardpc.saas.backendapi.entity.IngresoCompra;
 import org.springframework.data.jpa.repository.JpaRepository;

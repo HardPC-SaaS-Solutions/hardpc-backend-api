@@ -1,4 +1,4 @@
-package com.hardpc.saas.backendapi.service.transaccional;
+package com.hardpc.saas.backendapi.service;
 
 import com.hardpc.saas.backendapi.entity.Proveedor;
 

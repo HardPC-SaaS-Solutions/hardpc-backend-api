@@ -1,10 +1,10 @@
-package com.hardpc.saas.backendapi.service.transaccional.impl;
+package com.hardpc.saas.backendapi.service.impl;
 
 import com.hardpc.saas.backendapi.entity.IngresoCompra;
 import com.hardpc.saas.backendapi.entity.Proveedor;
-import com.hardpc.saas.backendapi.repository.transaccional.IngresoCompraRepository;
-import com.hardpc.saas.backendapi.repository.transaccional.ProveedorRepository;
-import com.hardpc.saas.backendapi.service.transaccional.IngresoCompraService;
+import com.hardpc.saas.backendapi.repository.IngresoCompraRepository;
+import com.hardpc.saas.backendapi.repository.ProveedorRepository;
+import com.hardpc.saas.backendapi.service.IngresoCompraService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 

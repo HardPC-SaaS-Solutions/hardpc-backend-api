@@ -1,8 +1,8 @@
-package com.hardpc.saas.backendapi.service.transaccional.impl;
+package com.hardpc.saas.backendapi.service.impl;
 
 import com.hardpc.saas.backendapi.entity.Proveedor;
-import com.hardpc.saas.backendapi.repository.transaccional.ProveedorRepository;
-import com.hardpc.saas.backendapi.service.transaccional.ProveedorService;
+import com.hardpc.saas.backendapi.repository.ProveedorRepository;
+import com.hardpc.saas.backendapi.service.ProveedorService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

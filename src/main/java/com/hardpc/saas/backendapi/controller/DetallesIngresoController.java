@@ -1,8 +1,8 @@
-package com.hardpc.saas.backendapi.controller.transaccional;
+package com.hardpc.saas.backendapi.controller;
 
 
 import com.hardpc.saas.backendapi.entity.DetalleIngreso;
-import com.hardpc.saas.backendapi.service.transaccional.DetalleIngresoService;
+import com.hardpc.saas.backendapi.service.DetalleIngresoService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
