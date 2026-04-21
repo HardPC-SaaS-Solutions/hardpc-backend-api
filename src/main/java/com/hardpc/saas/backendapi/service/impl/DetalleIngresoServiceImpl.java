@@ -1,46 +1,57 @@
 package com.hardpc.saas.backendapi.service.impl;
 
 import com.hardpc.saas.backendapi.entity.DetalleIngreso;
-import com.hardpc.saas.backendapi.entity.IngresoCompra;
 import com.hardpc.saas.backendapi.repository.DetalleIngresoRepository;
-import com.hardpc.saas.backendapi.repository.IngresoCompraRepository;
 import com.hardpc.saas.backendapi.service.DetalleIngresoService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class DetalleIngresoServiceImpl implements DetalleIngresoService {
 
-    private final DetalleIngresoRepository detalleRepository;
-    private final IngresoCompraRepository compraRepository;
+    private final DetalleIngresoRepository detalleIngresoRepository;
 
-    public DetalleIngresoServiceImpl(DetalleIngresoRepository detalleRepository, IngresoCompraRepository compraRepository) {
-        this.detalleRepository = detalleRepository;
-        this.compraRepository = compraRepository;
-
-    }
     @Override
-    public List<DetalleIngreso> listar() {
-        return detalleRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<DetalleIngreso> listarTodos() {
+        return detalleIngresoRepository.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DetalleIngreso buscarPorId(Long id) {
-        return detalleRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Detalle Ingreso no encontrado"));
+        return detalleIngresoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Detalle de ingreso no encontrado con id: " + id));
     }
 
     @Override
-    public DetalleIngreso guardarDetalle(DetalleIngreso detalleIngreso) {
+    public DetalleIngreso crear(DetalleIngreso detalleIngreso) {
+        detalleIngreso.setIdDetalleIngreso(null);
+        return detalleIngresoRepository.save(detalleIngreso);
+    }
 
-        Long idIngreso = detalleIngreso.getIngresoCompra().getIdIngreso();
+    @Override
+    public DetalleIngreso actualizar(Long id, DetalleIngreso detalleIngreso) {
+        DetalleIngreso existente = buscarPorId(id);
 
-        IngresoCompra ingreso = compraRepository.findById(idIngreso)
-                .orElseThrow(() -> new RuntimeException("Ingreso no encontrado"));
+        existente.setIngresoCompra(detalleIngreso.getIngresoCompra());
+        existente.setProducto(detalleIngreso.getProducto());
+        existente.setCantidad(detalleIngreso.getCantidad());
+        existente.setPrecioCompraUnitario(detalleIngreso.getPrecioCompraUnitario());
 
-        detalleIngreso.setIngresoCompra(ingreso);
+        return detalleIngresoRepository.save(existente);
+    }
 
-        return detalleRepository.save(detalleIngreso);
+    @Override
+    public void eliminar(Long id) {
+        DetalleIngreso existente = buscarPorId(id);
+        detalleIngresoRepository.delete(existente);
     }
 }
