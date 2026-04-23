@@ -1,5 +1,6 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "ingresos_compras")
+@JsonPropertyOrder({"idIngreso", "serieComprobante", "numeroComprobante", "fechaIngreso", "proveedor", "tipoComprobante", "usuario", "local", "impuesto", "totalCompra", "estadoIngreso", "comprobanteDocUrl", "fechaCreacion", "fechaActualizacion"})
 public class IngresoCompra extends AuditoriaBase {
 
     @Id
@@ -28,7 +30,7 @@ public class IngresoCompra extends AuditoriaBase {
     @NotNull(message = "El tipo de comprobante es obligatorio")
     @ManyToOne
     @JoinColumn(name = "id_tipo_comprobante", nullable = false)
-    private TipoComprobante tipoComprobante; // Entidad del módulo de Fabrizio
+    private TipoComprobante tipoComprobante;
 
     @NotNull(message = "El usuario es obligatorio")
     @ManyToOne

@@ -1,5 +1,6 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "productos")
+@JsonPropertyOrder({"idProducto", "codigoSku", "descripcion", "precioUsd", "mesesGarantia", "marca", "categoria", "unidadMedida", "esSerializado", "estado", "fechaCreacion", "fechaActualizacion"})
 public class Producto extends AuditoriaBase {
 
     @Id

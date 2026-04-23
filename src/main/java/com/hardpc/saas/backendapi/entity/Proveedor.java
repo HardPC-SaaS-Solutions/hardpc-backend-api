@@ -1,5 +1,6 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -13,6 +14,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "proveedores")
+@JsonPropertyOrder({"idProveedor", "ruc", "razonSocial", "nombreComercial", "direccion", "telefono", "email", "estado", "fechaCreacion", "fechaActualizacion"})
 public class Proveedor extends AuditoriaBase {
 
     @Id
