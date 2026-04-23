@@ -1,5 +1,6 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,7 +12,13 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "usuarios")
-@PrimaryKeyJoinColumn(name = "id_usuario")
+@PrimaryKeyJoinColumn(name = "id_usuario") // Vincula el ID con la tabla padre 'personas'
+@JsonPropertyOrder({
+        "idPersona", "numeroDocumento", "tipoDocumento", "nombres", "apellidos",
+        "razonSocial", "telefono", "email", "direccion", "estado",
+        "username", "password", "rol", "avatarUrl",
+        "fechaCreacion", "fechaActualizacion"
+})
 public class Usuario extends Persona {
 
     @NotBlank(message = "El nombre de usuario es obligatorio")

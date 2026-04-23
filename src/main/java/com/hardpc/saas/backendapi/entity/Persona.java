@@ -1,5 +1,6 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -12,7 +13,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "personas")
-@Inheritance(strategy = InheritanceType.JOINED) // Estrategia definida en PDF
+@Inheritance(strategy = InheritanceType.JOINED)
+@JsonPropertyOrder({"idPersona", "numeroDocumento", "tipoDocumento", "nombres", "apellidos", "razonSocial", "telefono", "email", "direccion", "estado", "fechaCreacion", "fechaActualizacion"})
 public abstract class Persona extends AuditoriaBase {
 
     @Id
