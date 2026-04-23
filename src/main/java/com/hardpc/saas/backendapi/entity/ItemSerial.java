@@ -1,5 +1,6 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "items_seriales")
+@JsonPropertyOrder({"idItemSerial", "numeroSerie", "condicion", "estadoDisponibilidad", "fechaFinGarantia", "producto", "local", "detalleIngreso", "fechaCreacion", "fechaActualizacion"})
 public class ItemSerial extends AuditoriaBase {
 
     @Id

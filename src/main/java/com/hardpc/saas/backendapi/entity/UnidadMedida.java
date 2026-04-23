@@ -1,5 +1,6 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -10,6 +11,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "unidades_medida")
+@JsonPropertyOrder({"idUnidadMedida", "descripcion", "abreviatura", "estado", "fechaCreacion", "fechaActualizacion"})
 public class UnidadMedida extends AuditoriaBase {
 
     @Id
