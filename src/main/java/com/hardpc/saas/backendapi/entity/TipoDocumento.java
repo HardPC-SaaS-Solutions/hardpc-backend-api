@@ -19,7 +19,7 @@ public class TipoDocumento extends AuditoriaBase {
 
     @NotBlank(message = "El nombre del tipo de documento es obligatorio")
     @Size(max = 50, message = "El nombre no puede exceder los 50 caracteres")
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, unique = true, length = 50)
     private String nombre;
 
     @NotNull(message = "La longitud exacta es obligatoria")

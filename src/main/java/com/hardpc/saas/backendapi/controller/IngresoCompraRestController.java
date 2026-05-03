@@ -11,7 +11,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/ingresos-compras")
+@RequestMapping("/api/ingresos-compra")
 @RequiredArgsConstructor
 public class IngresoCompraRestController {
 

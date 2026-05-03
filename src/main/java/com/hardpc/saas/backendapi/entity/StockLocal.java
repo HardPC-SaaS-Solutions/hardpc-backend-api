@@ -10,7 +10,9 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "stock_local")
+@Table(name = "stocks_locales", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_producto_local", columnNames = {"id_producto", "id_local"})
+})
 @JsonPropertyOrder({"idStockLocal", "producto", "local", "cantidadActual", "stockMinimo", "fechaCreacion", "fechaActualizacion"})
 public class StockLocal extends AuditoriaBase {
 

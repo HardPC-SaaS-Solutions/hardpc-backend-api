@@ -21,7 +21,7 @@ public class FormaPago extends AuditoriaBase {
 
     @NotBlank(message = "La descripción de la forma de pago es obligatoria")
     @Size(max = 50, message = "La descripción no puede exceder los 50 caracteres")
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, unique = true, length = 50)
     private String descripcion;
 
     @NotNull(message = "El estado es obligatorio")

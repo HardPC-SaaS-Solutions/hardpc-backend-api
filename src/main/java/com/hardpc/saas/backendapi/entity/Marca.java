@@ -26,6 +26,6 @@ public class Marca extends AuditoriaBase {
     @Column(nullable = false)
     private Boolean estado = true;
 
-    @Column(name = "logo_url", length = 255)
+    @Column(name = "logo_url", length = 500)
     private String logoUrl;
 }

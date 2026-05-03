@@ -11,7 +11,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tipos-comprobantes")
+@RequestMapping("/api/tipos-comprobante")
 @RequiredArgsConstructor
 public class TipoComprobanteRestController {
 

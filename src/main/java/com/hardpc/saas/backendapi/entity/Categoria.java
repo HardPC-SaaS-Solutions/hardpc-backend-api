@@ -30,6 +30,6 @@ public class Categoria extends AuditoriaBase {
     @Column(nullable = false)
     private Boolean estado = true;
 
-    @Column(name = "icono_url", length = 255)
+    @Column(name = "icono_url", length = 500)
     private String iconoUrl;
 }

@@ -1,9 +1,11 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,12 +28,14 @@ public class ItemSerial extends AuditoriaBase {
     private String numeroSerie;
 
     @NotBlank(message = "La condición es obligatoria")
+    @Pattern(regexp = "^(NUEVO|USADO|REACONDICIONADO|OPEN_BOX|DEFECTUOSO)$", message = "Condición inválida")
     @Column(nullable = false, length = 50)
-    private String condicion; // Ejemplo: NUEVO, USADO, REACONDICIONADO
+    private String condicion;
 
     @NotBlank(message = "El estado de disponibilidad es obligatorio")
+    @Pattern(regexp = "^(DISPONIBLE|VENDIDO|RESERVADO|EN_GARANTIA|DADO_DE_BAJA|EN_TRANSITO|EN_REPARACION)$", message = "Estado inválido")
     @Column(name = "estado_disponibilidad", nullable = false, length = 50)
-    private String estadoDisponibilidad; // Ejemplo: DISPONIBLE, VENDIDO, RESERVADO
+    private String estadoDisponibilidad;
 
     @Column(name = "fecha_fin_garantia")
     private LocalDateTime fechaFinGarantia;
@@ -46,6 +50,8 @@ public class ItemSerial extends AuditoriaBase {
     @JoinColumn(name = "id_local", nullable = false)
     private Local local;
 
-    @Column(name = "id_detalle_ingreso")
-    private Long idDetalleIngreso;
+    @ManyToOne
+    @JoinColumn(name = "id_detalle_ingreso")
+    @JsonBackReference
+    private DetalleIngreso detalleIngreso;
 }

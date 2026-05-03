@@ -1,20 +1,24 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "ingresos_compras")
+@Table(name = "ingresos_compra", uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uk_ingreso_proveedor_comprobante",
+                columnNames = {"id_proveedor", "id_tipo_comprobante", "serie_comprobante", "numero_comprobante"}
+        )
+})
 @JsonPropertyOrder({"idIngreso", "serieComprobante", "numeroComprobante", "fechaIngreso", "proveedor", "tipoComprobante", "usuario", "local", "impuesto", "totalCompra", "estadoIngreso", "comprobanteDocUrl", "fechaCreacion", "fechaActualizacion"})
 public class IngresoCompra extends AuditoriaBase {
 
@@ -67,11 +71,16 @@ public class IngresoCompra extends AuditoriaBase {
     private BigDecimal totalCompra;
 
     @NotBlank(message = "El estado del ingreso es obligatorio")
+    @Pattern(regexp = "^(REGISTRADO|ANULADO)$", message = "El estado debe ser REGISTRADO o ANULADO")
     @Size(max = 50, message = "El estado no puede exceder los 50 caracteres")
     @Column(name = "estado_ingreso", nullable = false, length = 50)
-    private String estadoIngreso; // Ejemplo: REGISTRADO, ANULADO
+    private String estadoIngreso = "REGISTRADO";
 
     @Size(max = 255, message = "La URL del documento no puede exceder los 255 caracteres")
     @Column(name = "comprobante_doc_url", length = 255)
     private String comprobanteDocUrl;
+
+    @OneToMany(mappedBy = "ingresoCompra", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<DetalleIngreso> detalles;
 }
