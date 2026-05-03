@@ -7,13 +7,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "productos")
 @JsonPropertyOrder({"idProducto", "codigoSku", "descripcion", "precioUsd", "mesesGarantia", "marca", "categoria", "unidadMedida", "esSerializado", "estado", "fechaCreacion", "fechaActualizacion"})

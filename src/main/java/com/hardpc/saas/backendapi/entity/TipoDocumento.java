@@ -3,11 +3,14 @@ package com.hardpc.saas.backendapi.entity;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "tipos_documento")
 @JsonPropertyOrder({"idTipoDocumento", "nombre", "longitudExacta", "estado", "fechaCreacion", "fechaActualizacion"})
