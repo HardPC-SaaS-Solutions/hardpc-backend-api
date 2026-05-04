@@ -2,6 +2,7 @@ package com.hardpc.saas.backendapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.hardpc.saas.backendapi.enums.EstadoIngreso;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -75,10 +76,9 @@ public class IngresoCompra extends AuditoriaBase {
     private BigDecimal totalCompra;
 
     @NotBlank(message = "El estado del ingreso es obligatorio")
-    @Pattern(regexp = "^(REGISTRADO|ANULADO)$", message = "El estado debe ser REGISTRADO o ANULADO")
-    @Size(max = 50, message = "El estado no puede exceder los 50 caracteres")
+    @Enumerated(EnumType.STRING)
     @Column(name = "estado_ingreso", nullable = false, length = 50)
-    private String estadoIngreso = "REGISTRADO";
+    private EstadoIngreso estadoIngreso = EstadoIngreso.REGISTRADO;
 
     @Size(max = 255, message = "La URL del documento no puede exceder los 255 caracteres")
     @Column(name = "comprobante_doc_url", length = 255)

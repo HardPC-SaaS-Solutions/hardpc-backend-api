@@ -1,6 +1,7 @@
 package com.hardpc.saas.backendapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.hardpc.saas.backendapi.enums.RolNombre;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -22,9 +23,9 @@ public class Rol extends AuditoriaBase {
     private Long idRol;
 
     @NotBlank(message = "El nombre del rol es obligatorio")
-    @Size(max = 50, message = "El nombre no puede exceder los 50 caracteres")
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, unique = true, length = 50)
-    private String nombre;
+    private RolNombre nombre;
 
     @Size(max = 255, message = "La descripción no puede exceder los 255 caracteres")
     @Column(length = 255)

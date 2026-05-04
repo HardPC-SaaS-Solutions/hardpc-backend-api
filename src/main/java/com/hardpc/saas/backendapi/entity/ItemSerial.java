@@ -2,6 +2,8 @@ package com.hardpc.saas.backendapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.hardpc.saas.backendapi.enums.Condicion;
+import com.hardpc.saas.backendapi.enums.EstadoDisponibilidad;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -32,14 +34,14 @@ public class ItemSerial extends AuditoriaBase {
     private String numeroSerie;
 
     @NotBlank(message = "La condición es obligatoria")
-    @Pattern(regexp = "^(NUEVO|USADO|REACONDICIONADO|OPEN_BOX|DEFECTUOSO)$", message = "Condición inválida")
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String condicion;
+    private Condicion condicion;
 
     @NotBlank(message = "El estado de disponibilidad es obligatorio")
-    @Pattern(regexp = "^(DISPONIBLE|VENDIDO|RESERVADO|EN_GARANTIA|DADO_DE_BAJA|EN_TRANSITO|EN_REPARACION)$", message = "Estado inválido")
+    @Enumerated(EnumType.STRING)
     @Column(name = "estado_disponibilidad", nullable = false, length = 50)
-    private String estadoDisponibilidad;
+    private EstadoDisponibilidad estadoDisponibilidad = EstadoDisponibilidad.DISPONIBLE;
 
     @Column(name = "fecha_fin_garantia")
     private LocalDateTime fechaFinGarantia;

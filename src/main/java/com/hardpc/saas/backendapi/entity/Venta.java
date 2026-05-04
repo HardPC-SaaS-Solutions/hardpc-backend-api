@@ -2,6 +2,7 @@ package com.hardpc.saas.backendapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.hardpc.saas.backendapi.enums.EstadoVenta;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -80,10 +81,9 @@ public class Venta extends AuditoriaBase {
     private BigDecimal totalVenta;
 
     @NotBlank(message = "El estado de la venta es obligatorio")
-    @Pattern(regexp = "^(REGISTRADA|ANULADA)$", message = "El estado debe ser REGISTRADA o ANULADA")
-    @Size(max = 50, message = "El estado no puede exceder los 50 caracteres")
+    @Enumerated(EnumType.STRING)
     @Column(name = "estado_venta", nullable = false, length = 50)
-    private String estadoVenta = "REGISTRADA";
+    private EstadoVenta estadoVenta = EstadoVenta.REGISTRADA;
 
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
