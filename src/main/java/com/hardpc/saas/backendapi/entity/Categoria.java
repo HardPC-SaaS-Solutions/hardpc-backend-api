@@ -4,11 +4,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "categorias")
 @JsonPropertyOrder({"idCategoria", "nombre", "descripcion", "iconoUrl", "estado", "fechaCreacion", "fechaActualizacion"})
@@ -30,6 +33,6 @@ public class Categoria extends AuditoriaBase {
     @Column(nullable = false)
     private Boolean estado = true;
 
-    @Column(name = "icono_url", length = 255)
+    @Column(name = "icono_url", length = 500)
     private String iconoUrl;
 }

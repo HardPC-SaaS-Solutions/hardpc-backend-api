@@ -4,11 +4,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "unidades_medida")
 @JsonPropertyOrder({"idUnidadMedida", "descripcion", "abreviatura", "estado", "fechaCreacion", "fechaActualizacion"})
@@ -20,7 +23,7 @@ public class UnidadMedida extends AuditoriaBase {
 
     @NotBlank(message = "La descripción de la unidad es obligatoria")
     @Size(max = 100, message = "La descripción no puede exceder los 100 caracteres")
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String descripcion;
 
     @NotBlank(message = "La abreviatura es obligatoria")

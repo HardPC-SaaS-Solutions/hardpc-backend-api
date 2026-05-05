@@ -5,13 +5,16 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
-@Table(name = "tipos_comprobantes")
+@Table(name = "tipos_comprobante")
 @JsonPropertyOrder({"idTipoComprobante", "descripcion", "codigoSunat", "estado", "fechaCreacion", "fechaActualizacion"})
 public class TipoComprobante extends AuditoriaBase {
 
@@ -21,12 +24,12 @@ public class TipoComprobante extends AuditoriaBase {
 
     @NotBlank(message = "La descripción es obligatoria")
     @Size(max = 100, message = "La descripción no puede exceder los 100 caracteres")
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, unique = true, length = 100)
     private String descripcion;
 
     @NotBlank(message = "El código SUNAT es obligatorio")
     @Size(max = 20, message = "El código SUNAT no puede exceder los 20 caracteres")
-    @Column(name = "codigo_sunat", nullable = false, length = 20)
+    @Column(name = "codigo_sunat", nullable = false, unique = true, length = 20)
     private String codigoSunat;
 
     @NotNull(message = "El estado es obligatorio")

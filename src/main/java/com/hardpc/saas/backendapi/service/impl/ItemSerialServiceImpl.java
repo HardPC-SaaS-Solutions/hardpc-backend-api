@@ -47,7 +47,7 @@ public class ItemSerialServiceImpl implements ItemSerialService {
         existente.setFechaFinGarantia(itemSerial.getFechaFinGarantia());
         existente.setProducto(itemSerial.getProducto());
         existente.setLocal(itemSerial.getLocal());
-        existente.setIdDetalleIngreso(itemSerial.getIdDetalleIngreso());
+        existente.setDetalleIngreso(itemSerial.getDetalleIngreso());
 
         return itemSerialRepository.save(existente);
     }

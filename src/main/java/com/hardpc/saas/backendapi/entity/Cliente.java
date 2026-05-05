@@ -1,14 +1,18 @@
 package com.hardpc.saas.backendapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.hardpc.saas.backendapi.enums.TipoCliente;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "clientes")
 @PrimaryKeyJoinColumn(name = "id_cliente") // Vincula el ID con la tabla padre 'personas'
@@ -21,7 +25,7 @@ import lombok.EqualsAndHashCode;
 public class Cliente extends Persona {
 
     @NotBlank(message = "El tipo de cliente es obligatorio")
-    @Pattern(regexp = "^(MAYORISTA|MINORISTA)$", message = "El tipo de cliente debe ser MAYORISTA o MINORISTA")
+    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_cliente", nullable = false, length = 20)
-    private String tipoCliente;
+    private TipoCliente tipoCliente;
 }

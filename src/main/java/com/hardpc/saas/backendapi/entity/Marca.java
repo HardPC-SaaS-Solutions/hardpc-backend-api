@@ -4,11 +4,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "marcas")
 @JsonPropertyOrder({"idMarca", "nombre", "logoUrl", "estado", "fechaCreacion", "fechaActualizacion"})
@@ -26,6 +29,6 @@ public class Marca extends AuditoriaBase {
     @Column(nullable = false)
     private Boolean estado = true;
 
-    @Column(name = "logo_url", length = 255)
+    @Column(name = "logo_url", length = 500)
     private String logoUrl;
 }

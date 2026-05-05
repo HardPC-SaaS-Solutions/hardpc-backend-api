@@ -11,7 +11,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/detalles-ventas")
+@RequestMapping("/api/detalles-venta")
 @RequiredArgsConstructor
 public class DetalleVentaRestController {
 

@@ -1,17 +1,22 @@
 package com.hardpc.saas.backendapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.hardpc.saas.backendapi.enums.TipoMovimiento;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 import java.time.LocalDateTime;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "movimientos_inventario")
 @JsonPropertyOrder({"idMovimiento", "tipoMovimiento", "fechaHora", "cantidad", "observacion", "producto", "itemSerial", "localDestino", "usuario", "fechaCreacion", "fechaActualizacion"})
@@ -22,9 +27,9 @@ public class MovimientoInventario extends AuditoriaBase {
     private Long idMovimiento;
 
     @NotBlank(message = "El tipo de movimiento es obligatorio")
-    @Pattern(regexp = "^(ENTRADA|SALIDA|TRASLADO)$", message = "El tipo debe ser ENTRADA, SALIDA o TRASLADO")
+    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_movimiento", nullable = false, length = 20)
-    private String tipoMovimiento;
+    private TipoMovimiento tipoMovimiento;
 
     @NotNull(message = "La fecha y hora son obligatorias")
     @Column(name = "fecha_hora", nullable = false)

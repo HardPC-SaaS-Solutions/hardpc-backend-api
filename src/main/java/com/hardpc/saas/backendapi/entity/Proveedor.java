@@ -7,11 +7,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "proveedores")
 @JsonPropertyOrder({"idProveedor", "ruc", "razonSocial", "nombreComercial", "direccion", "telefono", "email", "estado", "fechaCreacion", "fechaActualizacion"})
@@ -28,11 +31,11 @@ public class Proveedor extends AuditoriaBase {
 
     @NotBlank(message = "La razón social es obligatoria")
     @Size(max = 150, message = "La razón social no puede exceder los 150 caracteres")
-    @Column(name = "razon_social", nullable = false, length = 150)
+    @Column(name = "razon_social", nullable = false, unique = true, length = 150)
     private String razonSocial;
 
     @Size(max = 150, message = "El nombre comercial no puede exceder los 150 caracteres")
-    @Column(name = "nombre_comercial", length = 150)
+    @Column(name = "nombre_comercial", unique = true, length = 150)
     private String nombreComercial;
 
     @NotBlank(message = "La dirección es obligatoria")
@@ -48,7 +51,7 @@ public class Proveedor extends AuditoriaBase {
     @NotBlank(message = "El email es obligatorio")
     @Email(message = "Debe ser un correo electrónico válido")
     @Size(max = 100, message = "El email no puede exceder los 100 caracteres")
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
 
     @NotNull(message = "El estado es obligatorio")
