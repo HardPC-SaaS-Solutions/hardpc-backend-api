@@ -80,7 +80,7 @@ public class Venta extends AuditoriaBase {
     @Column(name = "total_venta", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalVenta;
 
-    @NotBlank(message = "El estado de la venta es obligatorio")
+    @NotNull(message = "El estado de la venta es obligatorio")
     @Enumerated(EnumType.STRING)
     @Column(name = "estado_venta", nullable = false, length = 50)
     private EstadoVenta estadoVenta = EstadoVenta.REGISTRADA;

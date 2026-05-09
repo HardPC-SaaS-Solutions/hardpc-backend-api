@@ -75,7 +75,7 @@ public class IngresoCompra extends AuditoriaBase {
     @Column(name = "total_compra", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalCompra;
 
-    @NotBlank(message = "El estado del ingreso es obligatorio")
+    @NotNull(message = "El estado del ingreso es obligatorio")
     @Enumerated(EnumType.STRING)
     @Column(name = "estado_ingreso", nullable = false, length = 50)
     private EstadoIngreso estadoIngreso = EstadoIngreso.REGISTRADO;
