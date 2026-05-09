@@ -1,4 +1,5 @@
 package com.hardpc.saas.backendapi.config;
+
 import com.hardpc.saas.backendapi.entity.Rol;
 import com.hardpc.saas.backendapi.entity.TipoDocumento;
 import com.hardpc.saas.backendapi.entity.Usuario;
@@ -22,22 +23,22 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    @Transactional // IMPORTANTE: Para que todo se guarde en bloque
+    @Transactional // Garantiza que si un insert falla, se haga rollback completo (Atomicidad)
     public void run(String... args) throws Exception {
 
-        System.out.println("🌱 Iniciando verificación de datos maestros...");
+        System.out.println("🌱 Inicializando catálogos y usuario maestro...");
 
-        // 1. Sembrar Rol (Si no existe, lo crea al vuelo)
+        // 1. Validación y creación del rol por defecto
         Rol rolAdmin = rolRepository.findByNombre(RolNombre.ROLE_ADMIN)
                 .orElseGet(() -> {
                     Rol nuevoRol = new Rol();
                     nuevoRol.setNombre(RolNombre.ROLE_ADMIN);
-                    nuevoRol.setEstado(true); // O los campos que requiera tu entidad
+                    nuevoRol.setEstado(true);
                     return rolRepository.save(nuevoRol);
                 });
 
-        // 2. Sembrar Tipo de Documento (Ejemplo con DNI)
-        TipoDocumento dni = tipoDocumentoRepository.findByNombre("Documento Nacional de Identidad") // O como busques
+        // 2. Validación y creación del tipo de documento por defecto
+        TipoDocumento dni = tipoDocumentoRepository.findByNombre("Documento Nacional de Identidad")
                 .orElseGet(() -> {
                     TipoDocumento nuevoDoc = new TipoDocumento();
                     nuevoDoc.setNombre("Documento Nacional de Identidad");
@@ -45,29 +46,29 @@ public class DatabaseSeeder implements CommandLineRunner {
                     return tipoDocumentoRepository.save(nuevoDoc);
                 });
 
-        // 3. Sembrar al Usuario Administrador (Depende de los dos anteriores)
-        if (!usuarioRepository.existsByEmail("fabrizio@hardpc.com")) {
+        // 3. Creación del administrador del sistema (Ejecución idempotente)
+        if (!usuarioRepository.existsByEmail("fteodorc@hardpc.com")) {
 
             Usuario admin = new Usuario();
 
-            // Campos heredados de Persona
+            // Datos de perfil (Persona)
             admin.setNombres("Fabrizio Jesus");
             admin.setApellidos("Teodor Celis");
-            admin.setTipoDocumento(dni); // <-- ASIGNACIÓN DE LLAVE FORÁNEA
+            admin.setTipoDocumento(dni);
             admin.setNumeroDocumento("61000070");
-
-            // Campos de Usuario
-            admin.setUsername("fabrizio");
             admin.setTelefono("994499515");
-            admin.setEmail("fabrizio@hardpc.com");
+
+            // Credenciales y seguridad (Usuario)
+            admin.setUsername("fteodorc");
+            admin.setEmail("fteodorc@hardpc.com");
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setEstado(true);
-            admin.setRol(rolAdmin); // <-- ASIGNACIÓN DE LLAVE FORÁNEA
+            admin.setRol(rolAdmin);
 
             usuarioRepository.save(admin);
-            System.out.println("✅ Administrador Supremo creado con éxito.");
+            System.out.println("✅ Administrador de HardPC creado con éxito.");
         } else {
-            System.out.println("👍 La base de datos ya contiene los datos maestros iniciales.");
+            System.out.println("👍 Catálogos listos. El usuario maestro ya existe.");
         }
     }
 }
