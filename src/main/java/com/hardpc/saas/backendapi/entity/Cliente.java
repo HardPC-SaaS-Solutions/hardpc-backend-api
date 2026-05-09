@@ -3,8 +3,7 @@ package com.hardpc.saas.backendapi.entity;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.hardpc.saas.backendapi.enums.TipoCliente;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -24,7 +23,7 @@ import lombok.experimental.SuperBuilder;
 })
 public class Cliente extends Persona {
 
-    @NotBlank(message = "El tipo de cliente es obligatorio")
+    @NotNull(message = "El tipo de cliente es obligatorio")
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_cliente", nullable = false, length = 20)
     private TipoCliente tipoCliente;

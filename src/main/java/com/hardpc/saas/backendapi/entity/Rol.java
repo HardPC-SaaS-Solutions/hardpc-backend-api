@@ -3,8 +3,7 @@ package com.hardpc.saas.backendapi.entity;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.hardpc.saas.backendapi.enums.RolNombre;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -22,7 +21,7 @@ public class Rol extends AuditoriaBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idRol;
 
-    @NotBlank(message = "El nombre del rol es obligatorio")
+    @NotNull(message = "El nombre del rol es obligatorio")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, unique = true, length = 50)
     private RolNombre nombre;

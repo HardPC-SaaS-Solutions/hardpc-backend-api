@@ -3,10 +3,7 @@ package com.hardpc.saas.backendapi.entity;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.hardpc.saas.backendapi.enums.TipoMovimiento;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -26,7 +23,7 @@ public class MovimientoInventario extends AuditoriaBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idMovimiento;
 
-    @NotBlank(message = "El tipo de movimiento es obligatorio")
+    @NotNull(message = "El tipo de movimiento es obligatorio")
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_movimiento", nullable = false, length = 20)
     private TipoMovimiento tipoMovimiento;
