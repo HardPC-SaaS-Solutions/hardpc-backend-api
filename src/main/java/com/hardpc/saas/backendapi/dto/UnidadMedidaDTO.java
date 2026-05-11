@@ -1,11 +1,13 @@
 package com.hardpc.saas.backendapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
+@JsonPropertyOrder({"id", "descripcion", "abreviatura", "estado"})
 public class UnidadMedidaDTO {
     private Long id;
 

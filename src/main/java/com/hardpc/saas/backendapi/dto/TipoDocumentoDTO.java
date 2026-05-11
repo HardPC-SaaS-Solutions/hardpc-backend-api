@@ -1,5 +1,6 @@
 package com.hardpc.saas.backendapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -8,6 +9,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
+@JsonPropertyOrder({"id", "nombre", "longitudExacta", "estado"})
 public class TipoDocumentoDTO {
     private Long id;
 
