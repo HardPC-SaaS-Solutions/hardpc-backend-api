@@ -1,9 +1,17 @@
 package com.hardpc.saas.backendapi.repository;
 
 import com.hardpc.saas.backendapi.entity.Categoria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
+    boolean existsByNombreIgnoreCase(String nombre);
+    boolean existsByNombreIgnoreCaseAndIdCategoriaNot(String nombre, Long idCategoria);
+    Page<Categoria> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);
+    List<Categoria> findByEstadoTrueOrderByNombreAsc();
 }
