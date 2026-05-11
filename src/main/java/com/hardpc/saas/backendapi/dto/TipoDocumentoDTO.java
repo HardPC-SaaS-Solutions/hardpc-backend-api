@@ -1,0 +1,25 @@
+package com.hardpc.saas.backendapi.dto;
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+@Data
+public class TipoDocumentoDTO {
+    private Long id;
+
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 50, message = "El nombre no puede exceder los 50 caracteres")
+    private String nombre;
+
+    @NotNull(message = "La longitud exacta es obligatoria")
+    @Min(value = 1, message = "La longitud debe ser al menos 1")
+    @Max(value = 20, message = "La longitud no puede ser mayor a 20")
+    private Integer longitudExacta;
+
+    @NotNull(message = "El estado es obligatorio")
+    private Boolean estado;
+}
