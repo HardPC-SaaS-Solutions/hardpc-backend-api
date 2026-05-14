@@ -128,12 +128,3 @@ INSERT INTO movimientos_inventario (tipo_movimiento, fecha_hora, cantidad, id_pr
 ('ENTRADA', CURRENT_TIMESTAMP, 50, 4, NULL, 1, 1, 'Ingreso compra RAM', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('SALIDA', CURRENT_TIMESTAMP, 1, 1, 2, NULL, 3, 'Venta i7', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- 18. Venta (Cabecera)
-INSERT INTO ventas (id_venta, id_cliente, id_usuario, id_tipo_comprobante, id_forma_pago, id_local, serie_comprobante, numero_comprobante, fecha_venta, impuesto, total_venta, estado_venta, fecha_creacion, fecha_actualizacion) VALUES
-(1, 2, 3, 1, 1, 1, 'F001', '0000001', CURRENT_TIMESTAMP, 18.00, 450.00, 'PAGADO', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-(2, 5, 3, 2, 4, 2, 'B001', '0000001', CURRENT_TIMESTAMP, 18.00, 200.00, 'PAGADO', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
-
--- 19. Detalle Venta
-INSERT INTO detalles_ventas (id_venta, id_producto, id_item_serial, cantidad, precio_venta_unitario, descuento, fecha_creacion, fecha_actualizacion) VALUES
-(1, 1, 2, 1, 450.00, 0.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),  -- Venta del i7 a Ana SAC
-(2, 2, 3, 1, 200.00, 0.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);  -- Venta del Ryzen 5 a Luis
