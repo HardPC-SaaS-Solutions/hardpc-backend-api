@@ -2,15 +2,15 @@ package com.hardpc.saas.backendapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "personas")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -30,15 +30,16 @@ public abstract class Persona extends AuditoriaBase {
     @JoinColumn(name = "id_tipo_documento", nullable = false)
     private TipoDocumento tipoDocumento;
 
-    @NotBlank(message = "Los nombres son obligatorios")
+    //@NotBlank(message = "Los nombres son obligatorios")
     @Size(max = 100, message = "Los nombres no pueden exceder los 100 caracteres")
-    @Column(nullable = false, length = 100)
+    @Column(length = 100)
     private String nombres;
 
     @Size(max = 100, message = "Los apellidos no pueden exceder los 100 caracteres")
     @Column(length = 100)
     private String apellidos;
 
+    @Size(max = 150, message = "La razón social no puede exceder los 150 caracteres")
     @Column(name = "razon_social", length = 150)
     private String razonSocial;
 
@@ -49,7 +50,7 @@ public abstract class Persona extends AuditoriaBase {
 
     @Email(message = "El formato del email no es válido")
     @NotBlank(message = "El email es obligatorio")
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
 
     @Size(max = 255, message = "La dirección no puede exceder los 255 caracteres")

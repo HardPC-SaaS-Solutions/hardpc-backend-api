@@ -2,14 +2,15 @@ package com.hardpc.saas.backendapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "usuarios")
 @PrimaryKeyJoinColumn(name = "id_usuario") // Vincula el ID con la tabla padre 'personas'

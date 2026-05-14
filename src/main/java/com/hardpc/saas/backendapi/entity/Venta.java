@@ -1,20 +1,29 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.hardpc.saas.backendapi.enums.EstadoVenta;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
-@Table(name = "ventas")
+@Table(name = "ventas", uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uk_venta_comprobante",
+                columnNames = {"id_tipo_comprobante", "serie_comprobante", "numero_comprobante"}
+        )
+})
 @JsonPropertyOrder({"idVenta", "serieComprobante", "numeroComprobante", "fechaVenta", "cliente", "usuario", "tipoComprobante", "formaPago", "local", "impuesto", "totalVenta", "estadoVenta", "fechaCreacion", "fechaActualizacion"})
 public class Venta extends AuditoriaBase {
 
@@ -71,8 +80,12 @@ public class Venta extends AuditoriaBase {
     @Column(name = "total_venta", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalVenta;
 
-    @NotBlank(message = "El estado de la venta es obligatorio")
-    @Size(max = 50, message = "El estado no puede exceder los 50 caracteres")
+    @NotNull(message = "El estado de la venta es obligatorio")
+    @Enumerated(EnumType.STRING)
     @Column(name = "estado_venta", nullable = false, length = 50)
-    private String estadoVenta; // Ejemplo: REGISTRADA, ANULADA
+    private EstadoVenta estadoVenta = EstadoVenta.REGISTRADA;
+
+    @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<DetalleVenta> detalles;
 }

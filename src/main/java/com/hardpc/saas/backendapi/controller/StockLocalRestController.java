@@ -11,7 +11,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/stocks-locales") // Ruta corregida
+@RequestMapping("/api/stocks-locales")
 @RequiredArgsConstructor
 public class StockLocalRestController {
 

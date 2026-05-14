@@ -2,15 +2,19 @@ package com.hardpc.saas.backendapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
-@Table(name = "stock_local")
+@Table(name = "stocks_locales", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_producto_local", columnNames = {"id_producto", "id_local"})
+})
 @JsonPropertyOrder({"idStockLocal", "producto", "local", "cantidadActual", "stockMinimo", "fechaCreacion", "fechaActualizacion"})
 public class StockLocal extends AuditoriaBase {
 

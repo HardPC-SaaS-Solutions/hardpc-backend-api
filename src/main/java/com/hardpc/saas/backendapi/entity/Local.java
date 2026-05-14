@@ -2,13 +2,15 @@ package com.hardpc.saas.backendapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "locales")
 @JsonPropertyOrder({"idLocal", "nombre", "direccion", "telefono", "estado", "fechaCreacion", "fechaActualizacion"})
@@ -20,7 +22,7 @@ public class Local extends AuditoriaBase {
 
     @NotBlank(message = "El nombre del local es obligatorio")
     @Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, unique = true, length = 100)
     private String nombre;
 
     @NotBlank(message = "La dirección es obligatoria")

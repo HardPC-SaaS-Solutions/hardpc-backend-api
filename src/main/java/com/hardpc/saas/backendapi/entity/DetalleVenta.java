@@ -1,18 +1,21 @@
 package com.hardpc.saas.backendapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 import java.math.BigDecimal;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @Entity
-@Table(name = "detalles_ventas")
+@Table(name = "detalles_venta")
 @JsonPropertyOrder({"idDetalleVenta", "venta", "producto", "itemSerial", "cantidad", "precioVentaUnitario", "descuento", "fechaCreacion", "fechaActualizacion"})
 public class DetalleVenta extends AuditoriaBase {
 
@@ -23,6 +26,7 @@ public class DetalleVenta extends AuditoriaBase {
     @NotNull(message = "La venta es obligatoria")
     @ManyToOne
     @JoinColumn(name = "id_venta", nullable = false)
+    @JsonBackReference
     private Venta venta;
 
     @NotNull(message = "El producto es obligatorio")
