@@ -37,13 +37,26 @@ public class DatabaseSeeder implements CommandLineRunner {
                     return rolRepository.save(nuevoRol);
                 });
 
-        // 2. Validación y creación del tipo de documento por defecto
-        TipoDocumento dni = tipoDocumentoRepository.findByNombre("Documento Nacional de Identidad")
+        // 2. Validación y creación/actualización adaptativa
+        TipoDocumento dni = tipoDocumentoRepository.findByAbreviaturaIgnoreCase("DNI")
                 .orElseGet(() -> {
-                    TipoDocumento nuevoDoc = new TipoDocumento();
-                    nuevoDoc.setNombre("Documento Nacional de Identidad");
-                    nuevoDoc.setLongitudExacta(8);
-                    return tipoDocumentoRepository.save(nuevoDoc);
+                    // REGLA DE TRANSICIÓN: Si no hay "DNI", revisamos si existe el registro antiguo por Nombre
+                    return tipoDocumentoRepository.findByNombreIgnoreCase("Documento Nacional de Identidad")
+                            .map(docExistente -> {
+                                // ¡Ajá! El registro existía pero no tenía abreviatura. Lo actualizamos aquí mismo.
+                                System.out.println("🔧 Actualizando registro antiguo de TipoDocumento con su abreviatura...");
+                                docExistente.setAbreviatura("DNI");
+                                return tipoDocumentoRepository.save(docExistente);
+                            })
+                            .orElseGet(() -> {
+                                // Si de verdad no existe ni por abreviatura ni por nombre, es una base de datos limpia de cero.
+                                TipoDocumento nuevoDoc = new TipoDocumento();
+                                nuevoDoc.setNombre("Documento Nacional de Identidad");
+                                nuevoDoc.setAbreviatura("DNI");
+                                nuevoDoc.setLongitudExacta(8);
+                                nuevoDoc.setEstado(true);
+                                return tipoDocumentoRepository.save(nuevoDoc);
+                            });
                 });
 
         // 3. Creación del administrador del sistema (Ejecución idempotente)
