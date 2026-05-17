@@ -1,12 +1,16 @@
 package com.hardpc.saas.backendapi.service;
 
-import com.hardpc.saas.backendapi.entity.UnidadMedida;
+import com.hardpc.saas.backendapi.dto.UnidadMedidaDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface UnidadMedidaService {
-    List<UnidadMedida> listarTodos();
-    UnidadMedida buscarPorId(Long id);
-    UnidadMedida crear(UnidadMedida unidadMedida);
-    UnidadMedida actualizar(Long id, UnidadMedida unidadMedida);
-    void eliminar(Long id);
+    Page<UnidadMedidaDTO> listarPaginado(String buscar, Pageable pageable);
+    List<UnidadMedidaDTO> listarActivosParaCombo();
+    UnidadMedidaDTO buscarPorId(Long id);
+    UnidadMedidaDTO crear(UnidadMedidaDTO dto);
+    UnidadMedidaDTO actualizar(Long id, UnidadMedidaDTO dto);
+    void eliminarLogico(Long id);
 }
