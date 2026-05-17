@@ -13,6 +13,6 @@ public class AuthResponseDTO {
 
     private String token;
     private String email;
-    private String nombres;
+    private String nombreCompleto;
     private String rol;
 }
