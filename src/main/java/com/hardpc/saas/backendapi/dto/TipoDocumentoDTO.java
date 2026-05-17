@@ -1,11 +1,7 @@
 package com.hardpc.saas.backendapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
@@ -22,6 +18,5 @@ public class TipoDocumentoDTO {
     @Max(value = 20, message = "La longitud no puede ser mayor a 20")
     private Integer longitudExacta;
 
-    @NotNull(message = "El estado es obligatorio")
     private Boolean estado;
 }

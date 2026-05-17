@@ -1,9 +1,7 @@
 package com.hardpc.saas.backendapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
@@ -19,6 +17,5 @@ public class UnidadMedidaDTO {
     @Size(max = 10, message = "La abreviatura no puede exceder los 10 caracteres")
     private String abreviatura;
 
-    @NotNull(message = "El estado es obligatorio")
     private Boolean estado;
 }

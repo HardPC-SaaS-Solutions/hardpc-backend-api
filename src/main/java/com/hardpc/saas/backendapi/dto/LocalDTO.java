@@ -1,9 +1,7 @@
 package com.hardpc.saas.backendapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
@@ -23,7 +21,6 @@ public class LocalDTO {
     @Size(max = 20, message = "El teléfono no puede exceder los 20 caracteres")
     private String telefono;
 
-    @NotNull(message = "El estado es obligatorio")
     private Boolean estado;
 
     @Size(max = 255, message = "La URL de la foto no puede exceder los 255 caracteres")

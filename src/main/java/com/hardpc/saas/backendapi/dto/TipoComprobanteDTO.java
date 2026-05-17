@@ -1,9 +1,7 @@
 package com.hardpc.saas.backendapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
@@ -19,6 +17,5 @@ public class TipoComprobanteDTO {
     @Size(max = 20, message = "El código SUNAT no puede exceder los 20 caracteres")
     private String codigoSunat;
 
-    @NotNull(message = "El estado es obligatorio")
     private Boolean estado;
 }

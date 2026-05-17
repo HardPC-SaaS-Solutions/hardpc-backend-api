@@ -1,9 +1,7 @@
 package com.hardpc.saas.backendapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
@@ -18,7 +16,6 @@ public class CategoriaDTO {
     @Size(max = 255, message = "La descripción no puede exceder los 255 caracteres")
     private String descripcion;
 
-    @NotNull(message = "El estado es obligatorio")
     private Boolean estado;
 
     @Size(max = 500, message = "La URL del ícono no puede exceder los 500 caracteres")
