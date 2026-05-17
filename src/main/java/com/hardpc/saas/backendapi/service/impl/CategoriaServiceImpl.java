@@ -54,6 +54,7 @@ public class CategoriaServiceImpl implements CategoriaService {
 
         Categoria entidad = mapper.toEntity(dto);
         entidad.setIdCategoria(null);
+        entidad.setEstado(true);
         return mapper.toDTO(repository.save(entidad));
     }
 

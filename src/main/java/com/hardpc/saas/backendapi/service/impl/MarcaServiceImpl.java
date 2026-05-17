@@ -54,6 +54,7 @@ public class MarcaServiceImpl implements MarcaService {
 
         Marca entidad = mapper.toEntity(dto);
         entidad.setIdMarca(null);
+        entidad.setEstado(true);
         return mapper.toDTO(repository.save(entidad));
     }
 
