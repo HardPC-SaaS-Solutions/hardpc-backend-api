@@ -1,12 +1,17 @@
 package com.hardpc.saas.backendapi.service;
 
-import com.hardpc.saas.backendapi.entity.TipoDocumento;
+import com.hardpc.saas.backendapi.dto.TipoDocumentoDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface TipoDocumentoService {
-    List<TipoDocumento> listarTodos();
-    TipoDocumento buscarPorId(Long id);
-    TipoDocumento crear(TipoDocumento tipoDocumento);
-    TipoDocumento actualizar(Long id, TipoDocumento tipoDocumento);
-    void eliminar(Long id);
+    Page<TipoDocumentoDTO> listarPaginado(String buscar, Pageable pageable);
+    List<TipoDocumentoDTO> listarActivosParaCombo();
+    TipoDocumentoDTO buscarPorId(Long id);
+    TipoDocumentoDTO buscarPorAbreviatura(String abreviatura);
+    TipoDocumentoDTO crear(TipoDocumentoDTO dto);
+    TipoDocumentoDTO actualizar(Long id, TipoDocumentoDTO dto);
+    void eliminarLogico(Long id);
 }

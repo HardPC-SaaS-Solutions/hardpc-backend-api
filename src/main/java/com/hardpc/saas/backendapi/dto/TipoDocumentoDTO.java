@@ -5,7 +5,7 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
-@JsonPropertyOrder({"id", "nombre", "longitudExacta", "estado"})
+@JsonPropertyOrder({"id", "nombre", "abreviatura", "longitudExacta", "estado"})
 public class TipoDocumentoDTO {
     private Long id;
 
