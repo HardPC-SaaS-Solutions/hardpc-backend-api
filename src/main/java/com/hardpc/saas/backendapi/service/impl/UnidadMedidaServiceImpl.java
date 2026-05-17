@@ -45,6 +45,22 @@ public class UnidadMedidaServiceImpl implements UnidadMedidaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public UnidadMedidaDTO buscarPorDescripcion(String descripcion) {
+        return repository.findByDescripcionIgnoreCase(descripcion)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Unidad de medida no encontrada con la descripción: " + descripcion));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UnidadMedidaDTO buscarPorAbreviatura(String abreviatura) {
+        return repository.findByAbreviaturaIgnoreCase(abreviatura)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Unidad de medida no encontrada con la abreviatura: " + abreviatura));
+    }
+
+    @Override
     @Transactional
     public UnidadMedidaDTO crear(UnidadMedidaDTO dto) {
         if (repository.existsByDescripcionIgnoreCase(dto.getDescripcion())) {

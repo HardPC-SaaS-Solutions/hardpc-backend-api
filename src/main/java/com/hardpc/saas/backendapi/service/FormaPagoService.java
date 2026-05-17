@@ -10,6 +10,7 @@ public interface FormaPagoService {
     Page<FormaPagoDTO> listarPaginado(String buscar, Pageable pageable);
     List<FormaPagoDTO> listarActivosParaCombo();
     FormaPagoDTO buscarPorId(Long id);
+    FormaPagoDTO buscarPorDescripcion(String descripcion);
     FormaPagoDTO crear(FormaPagoDTO dto);
     FormaPagoDTO actualizar(Long id, FormaPagoDTO dto);
     void eliminarLogico(Long id);

@@ -45,6 +45,14 @@ public class FormaPagoServiceImpl implements FormaPagoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public FormaPagoDTO buscarPorDescripcion(String descripcion) {
+        return repository.findByDescripcionIgnoreCase(descripcion)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Forma de pago no encontrada con la descripción: " + descripcion));
+    }
+
+    @Override
     @Transactional
     public FormaPagoDTO crear(FormaPagoDTO dto) {
         if (repository.existsByDescripcionIgnoreCase(dto.getDescripcion())) {

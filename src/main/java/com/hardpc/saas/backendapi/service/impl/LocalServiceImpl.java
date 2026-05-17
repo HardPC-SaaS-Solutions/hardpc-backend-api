@@ -91,7 +91,6 @@ public class LocalServiceImpl implements LocalService {
                 : repository.existsByNombreIgnoreCaseAndIdLocalNot(dto.getNombre(), idExistente);
         if (nombreDuplicado) throw new IllegalArgumentException("Ya existe un local con el nombre: " + dto.getNombre());
 
-        // Regla 9: Evitar duplicar ubicaciones físicas
         boolean direccionDuplicada = (idExistente == null)
                 ? repository.existsByDireccionIgnoreCase(dto.getDireccion())
                 : repository.existsByDireccionIgnoreCaseAndIdLocalNot(dto.getDireccion(), idExistente);

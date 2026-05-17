@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UnidadMedidaRepository extends JpaRepository<UnidadMedida, Long> {
@@ -16,4 +17,6 @@ public interface UnidadMedidaRepository extends JpaRepository<UnidadMedida, Long
     boolean existsByAbreviaturaIgnoreCaseAndIdUnidadMedidaNot(String abreviatura, Long idUnidadMedida);
     Page<UnidadMedida> findByDescripcionContainingIgnoreCase(String descripcion, Pageable pageable);
     List<UnidadMedida> findByEstadoTrueOrderByDescripcionAsc();
+    Optional<UnidadMedida> findByDescripcionIgnoreCase(String descripcion);
+    Optional<UnidadMedida> findByAbreviaturaIgnoreCase(String abreviatura);
 }

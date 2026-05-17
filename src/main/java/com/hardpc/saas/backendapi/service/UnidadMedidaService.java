@@ -10,6 +10,8 @@ public interface UnidadMedidaService {
     Page<UnidadMedidaDTO> listarPaginado(String buscar, Pageable pageable);
     List<UnidadMedidaDTO> listarActivosParaCombo();
     UnidadMedidaDTO buscarPorId(Long id);
+    UnidadMedidaDTO buscarPorDescripcion(String descripcion);
+    UnidadMedidaDTO buscarPorAbreviatura(String abreviatura);
     UnidadMedidaDTO crear(UnidadMedidaDTO dto);
     UnidadMedidaDTO actualizar(Long id, UnidadMedidaDTO dto);
     void eliminarLogico(Long id);

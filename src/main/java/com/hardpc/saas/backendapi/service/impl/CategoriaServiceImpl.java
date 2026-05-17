@@ -46,6 +46,14 @@ public class CategoriaServiceImpl implements CategoriaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public CategoriaDTO buscarPorNombre(String nombre) {
+        return repository.findByNombreIgnoreCase(nombre)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Categoría no encontrada con el nombre: " + nombre));
+    }
+
+    @Override
     @Transactional
     public CategoriaDTO crear(CategoriaDTO dto) {
         if (repository.existsByNombreIgnoreCase(dto.getNombre())) {

@@ -10,6 +10,7 @@ public interface CategoriaService {
     Page<CategoriaDTO> listarPaginado(String buscar, Pageable pageable);
     List<CategoriaDTO> listarActivosParaCombo();
     CategoriaDTO buscarPorId(Long id);
+    CategoriaDTO buscarPorNombre(String nombre);
     CategoriaDTO crear(CategoriaDTO dto);
     CategoriaDTO actualizar(Long id, CategoriaDTO dto);
     void eliminarLogico(Long id);

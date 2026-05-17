@@ -46,6 +46,14 @@ public class MarcaServiceImpl implements MarcaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public MarcaDTO buscarPorNombre(String nombre) {
+        return repository.findByNombreIgnoreCase(nombre)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Marca no encontrada con el nombre: " + nombre));
+    }
+
+    @Override
     @Transactional
     public MarcaDTO crear(MarcaDTO dto) {
         if (repository.existsByNombreIgnoreCase(dto.getNombre())) {
