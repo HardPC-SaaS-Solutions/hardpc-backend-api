@@ -1,6 +1,6 @@
 package com.hardpc.saas.backendapi.enums;
 
 public enum TipoCliente {
-    MAYORISTA,
-    MINORISTA
+    PERSONA_NATURAL,
+    EMPRESA
 }
