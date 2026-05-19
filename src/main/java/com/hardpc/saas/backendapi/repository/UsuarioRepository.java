@@ -1,6 +1,8 @@
 package com.hardpc.saas.backendapi.repository;
 
 import com.hardpc.saas.backendapi.entity.Usuario;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +20,19 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     // 2. Validaciones rápidas para futuros endpoints de registro
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+    boolean existsByNumeroDocumento(String numeroDocumento);
+
+    // 3. Validaciones de Unicidad (Actualización excluyendo el ID actual) ---
+    boolean existsByUsernameAndIdPersonaNot(String username, Long idPersona);
+    boolean existsByEmailAndIdPersonaNot(String email, Long idPersona);
+    boolean existsByNumeroDocumentoAndIdPersonaNot(String numeroDocumento, Long idPersona);
+
+    // 4. Búsqueda Paginada Dinámica usando JPQL limpio ---
+    @Query("SELECT u FROM Usuario u WHERE " +
+            "LOWER(u.username) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
+            "LOWER(u.nombres) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
+            "LOWER(u.apellidos) LIKE LOWER(CONCAT('%', :buscar, '%'))")
+    Page<Usuario> buscarPaginado(@Param("buscar") String buscar, Pageable pageable);
+
+    Optional<Usuario> findByUsername(String username);
 }
