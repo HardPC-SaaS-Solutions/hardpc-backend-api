@@ -15,11 +15,16 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     boolean existsByCodigoSku(String codigoSku);
     boolean existsByCodigoSkuAndIdProductoNot(String codigoSku, Long idProducto);
 
-    // --- Búsqueda Paginada Flexible (Optimizada para DataTables en Angular) ---
+    // --- Búsqueda Paginada Flexible (Optimizada para DataTables y Filtros Dinámicos) ---
     @Query("SELECT p FROM Producto p WHERE " +
-            "LOWER(p.codigoSku) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
-            "LOWER(p.descripcion) LIKE LOWER(CONCAT('%', :buscar, '%'))")
-    Page<Producto> buscarPaginado(@Param("buscar") String buscar, Pageable pageable);
+            "(:esSerializado IS NULL OR p.esSerializado = :esSerializado) AND " +
+            "(LOWER(p.codigoSku) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
+            "LOWER(p.descripcion) LIKE LOWER(CONCAT('%', :buscar, '%')))")
+    Page<Producto> buscarPaginado(
+            @Param("buscar") String buscar,
+            @Param("esSerializado") Boolean esSerializado,
+            Pageable pageable
+    );
 
     // --- Autonomía Arquitectónica: Consultas por Catálogos ---
     // Útiles para futuros filtros en reportes o en la pantalla de Punto de Venta (POS)

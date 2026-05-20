@@ -25,8 +25,10 @@ public class ProductoRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'OPERATIVO', 'CAJERO')")
     public ResponseEntity<Page<ProductoResponseDTO>> listarPaginado(
             @RequestParam(required = false, defaultValue = "") String buscar,
-            @PageableDefault(size = 10, sort = "codigoSku") Pageable pageable) {
-        return ResponseEntity.ok(service.listarPaginado(buscar, pageable));
+            @RequestParam(required = false) Boolean esSerializado,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        return ResponseEntity.ok(service.listarPaginado(buscar, esSerializado, pageable));
     }
 
     // --- ACCESO DE LECTURA: ENDPOINTS PERSONALIZADOS (POS) ---

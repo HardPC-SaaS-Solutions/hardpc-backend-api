@@ -32,11 +32,10 @@ public class ProductoServiceImpl implements ProductoService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductoResponseDTO> listarPaginado(String buscar, Pageable pageable) {
-        Page<Producto> pagina = (buscar != null && !buscar.trim().isEmpty())
-                ? repository.buscarPaginado(buscar, pageable)
-                : repository.findAll(pageable);
-        return pagina.map(mapper::toResponseDTO);
+    public Page<ProductoResponseDTO> listarPaginado(String buscar, Boolean esSerializado, Pageable pageable) {
+        String termino = (buscar == null) ? "" : buscar.trim();
+        return repository.buscarPaginado(termino, esSerializado, pageable)
+                .map(mapper::toResponseDTO);
     }
 
     @Override

@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductoService {
-    Page<ProductoResponseDTO> listarPaginado(String buscar, Pageable pageable);
+    Page<ProductoResponseDTO> listarPaginado(String buscar, Boolean esSerializado, Pageable pageable);
     ProductoResponseDTO buscarPorId(Long id);
     ProductoResponseDTO crear(ProductoRequestDTO dto);
     ProductoResponseDTO actualizar(Long id, ProductoRequestDTO dto);
