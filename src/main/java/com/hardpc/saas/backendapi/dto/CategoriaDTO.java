@@ -1,0 +1,23 @@
+package com.hardpc.saas.backendapi.dto;
+
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.*;
+import lombok.Data;
+
+@Data
+@JsonPropertyOrder({"id", "nombre", "descripcion", "iconoUrl", "estado"})
+public class CategoriaDTO {
+    private Long id;
+
+    @NotBlank(message = "El nombre de la categoría es obligatorio")
+    @Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
+    private String nombre;
+
+    @Size(max = 255, message = "La descripción no puede exceder los 255 caracteres")
+    private String descripcion;
+
+    private Boolean estado;
+
+    @Size(max = 500, message = "La URL del ícono no puede exceder los 500 caracteres")
+    private String iconoUrl;
+}

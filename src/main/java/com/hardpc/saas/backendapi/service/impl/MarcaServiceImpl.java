@@ -1,54 +1,93 @@
 package com.hardpc.saas.backendapi.service.impl;
 
+import com.hardpc.saas.backendapi.dto.MarcaDTO;
 import com.hardpc.saas.backendapi.entity.Marca;
+import com.hardpc.saas.backendapi.mapper.MaestroMapper;
 import com.hardpc.saas.backendapi.repository.MarcaRepository;
 import com.hardpc.saas.backendapi.service.MarcaService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class MarcaServiceImpl implements MarcaService {
 
-    private final MarcaRepository marcaRepository;
+    private final MarcaRepository repository;
+    private final MaestroMapper mapper;
 
     @Override
     @Transactional(readOnly = true)
-    public List<Marca> listarTodos() {
-        return marcaRepository.findAll();
+    public Page<MarcaDTO> listarPaginado(String buscar, Pageable pageable) {
+        Page<Marca> pagina = (buscar != null && !buscar.trim().isEmpty())
+                ? repository.findByNombreContainingIgnoreCase(buscar, pageable)
+                : repository.findAll(pageable);
+
+        return pagina.map(mapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Marca buscarPorId(Long id) {
-        return marcaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca no encontrada con id: " + id));
+    public List<MarcaDTO> listarActivosParaCombo() {
+        return mapper.toMarcaDTOList(repository.findByEstadoTrueOrderByNombreAsc());
     }
 
     @Override
-    public Marca crear(Marca marca) {
-        marca.setIdMarca(null);
-        return marcaRepository.save(marca);
+    @Transactional(readOnly = true)
+    public MarcaDTO buscarPorId(Long id) {
+        return repository.findById(id)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Marca no encontrada con el ID: " + id));
     }
 
     @Override
-    public Marca actualizar(Long id, Marca marca) {
-        Marca existente = buscarPorId(id);
-        existente.setNombre(marca.getNombre());
-        existente.setEstado(marca.getEstado());
-        existente.setLogoUrl(marca.getLogoUrl());
-        return marcaRepository.save(existente);
+    @Transactional(readOnly = true)
+    public MarcaDTO buscarPorNombre(String nombre) {
+        return repository.findByNombreIgnoreCase(nombre)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Marca no encontrada con el nombre: " + nombre));
     }
 
     @Override
-    public void eliminar(Long id) {
-        Marca existente = buscarPorId(id);
-        marcaRepository.delete(existente);
+    @Transactional
+    public MarcaDTO crear(MarcaDTO dto) {
+        if (repository.existsByNombreIgnoreCase(dto.getNombre())) {
+            throw new IllegalArgumentException("Ya existe una marca con el nombre: " + dto.getNombre());
+        }
+
+        Marca entidad = mapper.toEntity(dto);
+        entidad.setIdMarca(null);
+        entidad.setEstado(true);
+        return mapper.toDTO(repository.save(entidad));
+    }
+
+    @Override
+    @Transactional
+    public MarcaDTO actualizar(Long id, MarcaDTO dto) {
+        Marca existente = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Marca no encontrada con el ID: " + id));
+
+        if (repository.existsByNombreIgnoreCaseAndIdMarcaNot(dto.getNombre(), id)) {
+            throw new IllegalArgumentException("Ya existe otra marca con el nombre: " + dto.getNombre());
+        }
+
+        mapper.updateEntity(dto, existente);
+
+        return mapper.toDTO(repository.save(existente));
+    }
+
+    @Override
+    @Transactional
+    public void eliminarLogico(Long id) {
+        Marca existente = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Marca no encontrada con el ID: " + id));
+
+        existente.setEstado(false);
+        repository.save(existente);
     }
 }

@@ -1,12 +1,17 @@
 package com.hardpc.saas.backendapi.service;
 
-import com.hardpc.saas.backendapi.entity.Categoria;
+import com.hardpc.saas.backendapi.dto.CategoriaDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface CategoriaService {
-    List<Categoria> listarTodos();
-    Categoria buscarPorId(Long id);
-    Categoria crear(Categoria categoria);
-    Categoria actualizar(Long id, Categoria categoria);
-    void eliminar(Long id);
+    Page<CategoriaDTO> listarPaginado(String buscar, Pageable pageable);
+    List<CategoriaDTO> listarActivosParaCombo();
+    CategoriaDTO buscarPorId(Long id);
+    CategoriaDTO buscarPorNombre(String nombre);
+    CategoriaDTO crear(CategoriaDTO dto);
+    CategoriaDTO actualizar(Long id, CategoriaDTO dto);
+    void eliminarLogico(Long id);
 }

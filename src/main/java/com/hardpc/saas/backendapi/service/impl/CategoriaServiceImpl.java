@@ -1,55 +1,93 @@
 package com.hardpc.saas.backendapi.service.impl;
 
+import com.hardpc.saas.backendapi.dto.CategoriaDTO;
 import com.hardpc.saas.backendapi.entity.Categoria;
+import com.hardpc.saas.backendapi.mapper.MaestroMapper;
 import com.hardpc.saas.backendapi.repository.CategoriaRepository;
 import com.hardpc.saas.backendapi.service.CategoriaService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class CategoriaServiceImpl implements CategoriaService {
 
-    private final CategoriaRepository categoriaRepository;
+    private final CategoriaRepository repository;
+    private final MaestroMapper mapper;
 
     @Override
     @Transactional(readOnly = true)
-    public List<Categoria> listarTodos() {
-        return categoriaRepository.findAll();
+    public Page<CategoriaDTO> listarPaginado(String buscar, Pageable pageable) {
+        Page<Categoria> pagina = (buscar != null && !buscar.trim().isEmpty())
+                ? repository.findByNombreContainingIgnoreCase(buscar, pageable)
+                : repository.findAll(pageable);
+
+        return pagina.map(mapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Categoria buscarPorId(Long id) {
-        return categoriaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada con id: " + id));
+    public List<CategoriaDTO> listarActivosParaCombo() {
+        return mapper.toCategoriaDTOList(repository.findByEstadoTrueOrderByNombreAsc());
     }
 
     @Override
-    public Categoria crear(Categoria categoria) {
-        categoria.setIdCategoria(null);
-        return categoriaRepository.save(categoria);
+    @Transactional(readOnly = true)
+    public CategoriaDTO buscarPorId(Long id) {
+        return repository.findById(id)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Categoría no encontrada con el ID: " + id));
     }
 
     @Override
-    public Categoria actualizar(Long id, Categoria categoria) {
-        Categoria existente = buscarPorId(id);
-        existente.setNombre(categoria.getNombre());
-        existente.setDescripcion(categoria.getDescripcion());
-        existente.setEstado(categoria.getEstado());
-        existente.setIconoUrl(categoria.getIconoUrl());
-        return categoriaRepository.save(existente);
+    @Transactional(readOnly = true)
+    public CategoriaDTO buscarPorNombre(String nombre) {
+        return repository.findByNombreIgnoreCase(nombre)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Categoría no encontrada con el nombre: " + nombre));
     }
 
     @Override
-    public void eliminar(Long id) {
-        Categoria existente = buscarPorId(id);
-        categoriaRepository.delete(existente);
+    @Transactional
+    public CategoriaDTO crear(CategoriaDTO dto) {
+        if (repository.existsByNombreIgnoreCase(dto.getNombre())) {
+            throw new IllegalArgumentException("Ya existe una categoría con el nombre: " + dto.getNombre());
+        }
+
+        Categoria entidad = mapper.toEntity(dto);
+        entidad.setIdCategoria(null);
+        entidad.setEstado(true);
+        return mapper.toDTO(repository.save(entidad));
+    }
+
+    @Override
+    @Transactional
+    public CategoriaDTO actualizar(Long id, CategoriaDTO dto) {
+        Categoria existente = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Categoría no encontrada con el ID: " + id));
+
+        if (repository.existsByNombreIgnoreCaseAndIdCategoriaNot(dto.getNombre(), id)) {
+            throw new IllegalArgumentException("Ya existe otra categoría con el nombre: " + dto.getNombre());
+        }
+
+        mapper.updateEntity(dto, existente);
+
+        return mapper.toDTO(repository.save(existente));
+    }
+
+    @Override
+    @Transactional
+    public void eliminarLogico(Long id) {
+        Categoria existente = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Categoría no encontrada con el ID: " + id));
+
+        existente.setEstado(false);
+        repository.save(existente);
     }
 }

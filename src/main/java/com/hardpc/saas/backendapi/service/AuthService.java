@@ -39,12 +39,13 @@ public class AuthService {
         CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(request.getUsernameOrEmail());
 
         // 3. Preparamos los "Claims" (Datos extra) para inyectarlos en el token.
-        // NOTA: Ajusta "getNombres()" según cómo hayas llamado al atributo en tu entidad Persona/Usuario.
         Map<String, Object> extraClaims = new HashMap<>();
-        String nombreUsuario = userDetails.getUsuario().getNombres(); // O getNombreCompleto()
+
+        // Concatenamos nombre y apellido eliminando posibles espacios extraños con .trim()
+        String nombreCompleto = (userDetails.getUsuario().getNombres() + " " + userDetails.getUsuario().getApellidos()).trim();
         String rolUsuario = userDetails.getAuthorities().iterator().next().getAuthority();
 
-        extraClaims.put("nombres", nombreUsuario);
+        extraClaims.put("nombreCompleto", nombreCompleto);
         extraClaims.put("rol", rolUsuario);
 
         // 4. La Fábrica emite el token.
@@ -54,7 +55,7 @@ public class AuthService {
         return AuthResponseDTO.builder()
                 .token(jwtToken)
                 .email(userDetails.getUsername())
-                .nombres(nombreUsuario)
+                .nombreCompleto(nombreCompleto)
                 .rol(rolUsuario)
                 .build();
     }

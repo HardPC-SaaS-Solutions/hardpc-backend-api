@@ -1,12 +1,16 @@
 package com.hardpc.saas.backendapi.service;
 
-import com.hardpc.saas.backendapi.entity.Usuario;
-import java.util.List;
+import com.hardpc.saas.backendapi.dto.UsuarioRequestDTO;
+import com.hardpc.saas.backendapi.dto.UsuarioResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface UsuarioService {
-    List<Usuario> listarTodos();
-    Usuario buscarPorId(Long id);
-    Usuario crear(Usuario usuario);
-    Usuario actualizar(Long id, Usuario usuario);
-    void eliminar(Long id);
+    Page<UsuarioResponseDTO> listarPaginado(String buscar, Pageable pageable);
+    UsuarioResponseDTO buscarPorId(Long id);
+    UsuarioResponseDTO crear(UsuarioRequestDTO dto);
+    UsuarioResponseDTO actualizar(Long id, UsuarioRequestDTO dto);
+    void eliminarLogico(Long id);
+    // Plus arquitectónico: reactivar usuarios dados de baja
+    void reactivar(Long id);
 }
