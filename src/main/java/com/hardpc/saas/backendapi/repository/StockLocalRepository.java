@@ -32,4 +32,8 @@ public interface StockLocalRepository extends JpaRepository<StockLocal, Long> {
             "(LOWER(s.producto.codigoSku) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
             "LOWER(s.producto.descripcion) LIKE LOWER(CONCAT('%', :buscar, '%')))")
     Page<StockLocal> buscarEnLocalPaginado(@Param("idLocal") Long idLocal, @Param("buscar") String buscar, Pageable pageable);
+
+    // Verifica si hay stock físico suficiente para una venta
+    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM StockLocal s WHERE s.producto.idProducto = :idProducto AND s.local.idLocal = :idLocal AND s.cantidadActual >= :cantidadRequerida")
+    boolean hasStockSuficiente(@Param("idProducto") Long idProducto, @Param("idLocal") Long idLocal, @Param("cantidadRequerida") Integer cantidadRequerida);
 }
