@@ -43,14 +43,14 @@ public abstract class Persona extends AuditoriaBase {
     @Column(name = "razon_social", length = 150)
     private String razonSocial;
 
-    @NotBlank(message = "El teléfono es obligatorio")
+    //@NotBlank(message = "El teléfono es obligatorio")
     @Size(max = 20, message = "El teléfono no puede exceder los 20 caracteres")
-    @Column(nullable = false, length = 20)
+    @Column(/*nullable = false, */length = 20)
     private String telefono;
 
     @Email(message = "El formato del email no es válido")
-    @NotBlank(message = "El email es obligatorio")
-    @Column(nullable = false, unique = true, length = 100)
+    //@NotBlank(message = "El email es obligatorio")
+    @Column(/*nullable = false, unique = true, */length = 100)
     private String email;
 
     @Size(max = 255, message = "La dirección no puede exceder los 255 caracteres")
