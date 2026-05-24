@@ -1,12 +1,21 @@
 package com.hardpc.saas.backendapi.service;
 
-import com.hardpc.saas.backendapi.entity.MovimientoInventario;
-import java.util.List;
+import com.hardpc.saas.backendapi.dto.MovimientoInventarioRequestDTO;
+import com.hardpc.saas.backendapi.dto.MovimientoInventarioResponseDTO;
+import com.hardpc.saas.backendapi.enums.TipoMovimiento;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDateTime;
 
 public interface MovimientoInventarioService {
-    List<MovimientoInventario> listarTodos();
-    MovimientoInventario buscarPorId(Long id);
-    MovimientoInventario crear(MovimientoInventario movimiento);
-    MovimientoInventario actualizar(Long id, MovimientoInventario movimiento);
-    void eliminar(Long id);
+    // Inmutabilidad estricta: Solo Leer y Crear
+    MovimientoInventarioResponseDTO buscarPorId(Long id);
+    MovimientoInventarioResponseDTO registrarMovimiento(MovimientoInventarioRequestDTO dto);
+
+    // Históricos y Auditoría
+    Page<MovimientoInventarioResponseDTO> listarTodos(Pageable pageable);
+    Page<MovimientoInventarioResponseDTO> listarPorProducto(Long idProducto, Pageable pageable);
+    Page<MovimientoInventarioResponseDTO> listarPorLocal(Long idLocal, Pageable pageable);
+    Page<MovimientoInventarioResponseDTO> filtrarHistorial(LocalDateTime fechaInicio, LocalDateTime fechaFin, TipoMovimiento tipo, Pageable pageable);
 }

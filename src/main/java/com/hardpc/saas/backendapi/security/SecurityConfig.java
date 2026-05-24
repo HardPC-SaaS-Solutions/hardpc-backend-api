@@ -19,6 +19,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.hardpc.saas.backendapi.security.handler.CustomAuthenticationEntryPoint;
+import com.hardpc.saas.backendapi.security.handler.CustomAccessDeniedHandler;
 
 import java.util.List;
 
@@ -30,6 +32,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     /**
      * El filtro maestro que define las reglas de acceso a los endpoints.
@@ -49,12 +53,18 @@ public class SecurityConfig {
                         .anyRequest().authenticated()               // Todo lo demás requiere token
                 )
 
-                // 4. Política de sesión: STATELESS (El servidor no guarda sesiones en RAM)
+                // 4. Conectar el puente para atrapar excepciones de seguridad (JWT/Roles)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                )
+
+                // 5. Política de sesión: STATELESS (El servidor no guarda sesiones en RAM)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // 5. Conectar el motor de autenticación y el filtro JWT
+                // 6. Conectar el motor de autenticación y el filtro JWT
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

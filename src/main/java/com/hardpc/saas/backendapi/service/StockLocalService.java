@@ -1,12 +1,22 @@
 package com.hardpc.saas.backendapi.service;
 
-import com.hardpc.saas.backendapi.entity.StockLocal;
+import com.hardpc.saas.backendapi.dto.InversionStockDTO;
+import com.hardpc.saas.backendapi.dto.StockLocalRequestDTO;
+import com.hardpc.saas.backendapi.dto.StockLocalResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface StockLocalService {
-    List<StockLocal> listarTodos();
-    StockLocal buscarPorId(Long id);
-    StockLocal crear(StockLocal stockLocal);
-    StockLocal actualizar(Long id, StockLocal stockLocal);
-    void eliminar(Long id);
+    // Operaciones CRUD base (Sin Delete)
+    Page<StockLocalResponseDTO> listarPaginado(Pageable pageable);
+    StockLocalResponseDTO buscarPorId(Long id);
+    StockLocalResponseDTO crear(StockLocalRequestDTO dto);
+    StockLocalResponseDTO actualizar(Long id, StockLocalRequestDTO dto);
+
+    // Absorciones (Reportes y Consultas Específicas)
+    Page<StockLocalResponseDTO> listarAlertasStockMinimo(Pageable pageable);
+    List<InversionStockDTO> obtenerReporteInversion();
+    Page<StockLocalResponseDTO> buscarEnLocalPaginado(Long idLocal, String buscar, Pageable pageable);
 }

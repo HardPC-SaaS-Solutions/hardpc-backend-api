@@ -1,54 +1,106 @@
 package com.hardpc.saas.backendapi.service.impl;
 
+import com.hardpc.saas.backendapi.dto.UnidadMedidaDTO;
 import com.hardpc.saas.backendapi.entity.UnidadMedida;
+import com.hardpc.saas.backendapi.mapper.MaestroMapper;
 import com.hardpc.saas.backendapi.repository.UnidadMedidaRepository;
 import com.hardpc.saas.backendapi.service.UnidadMedidaService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class UnidadMedidaServiceImpl implements UnidadMedidaService {
 
-    private final UnidadMedidaRepository unidadMedidaRepository;
+    private final UnidadMedidaRepository repository;
+    private final MaestroMapper mapper;
 
     @Override
     @Transactional(readOnly = true)
-    public List<UnidadMedida> listarTodos() {
-        return unidadMedidaRepository.findAll();
+    public Page<UnidadMedidaDTO> listarPaginado(String buscar, Pageable pageable) {
+        Page<UnidadMedida> pagina = (buscar != null && !buscar.trim().isEmpty())
+                ? repository.findByDescripcionContainingIgnoreCase(buscar, pageable)
+                : repository.findAll(pageable);
+        return pagina.map(mapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public UnidadMedida buscarPorId(Long id) {
-        return unidadMedidaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unidad de medida no encontrada con id: " + id));
+    public List<UnidadMedidaDTO> listarActivosParaCombo() {
+        return mapper.toUnidadMedidaDTOList(repository.findByEstadoTrueOrderByDescripcionAsc());
     }
 
     @Override
-    public UnidadMedida crear(UnidadMedida unidadMedida) {
-        unidadMedida.setIdUnidadMedida(null);
-        return unidadMedidaRepository.save(unidadMedida);
+    @Transactional(readOnly = true)
+    public UnidadMedidaDTO buscarPorId(Long id) {
+        return repository.findById(id)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Unidad de Medida no encontrada con el ID: " + id));
     }
 
     @Override
-    public UnidadMedida actualizar(Long id, UnidadMedida unidadMedida) {
-        UnidadMedida existente = buscarPorId(id);
-        existente.setDescripcion(unidadMedida.getDescripcion());
-        existente.setAbreviatura(unidadMedida.getAbreviatura());
-        existente.setEstado(unidadMedida.getEstado());
-        return unidadMedidaRepository.save(existente);
+    @Transactional(readOnly = true)
+    public UnidadMedidaDTO buscarPorDescripcion(String descripcion) {
+        return repository.findByDescripcionIgnoreCase(descripcion)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Unidad de medida no encontrada con la descripción: " + descripcion));
     }
 
     @Override
-    public void eliminar(Long id) {
-        UnidadMedida existente = buscarPorId(id);
-        unidadMedidaRepository.delete(existente);
+    @Transactional(readOnly = true)
+    public UnidadMedidaDTO buscarPorAbreviatura(String abreviatura) {
+        return repository.findByAbreviaturaIgnoreCase(abreviatura)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Unidad de medida no encontrada con la abreviatura: " + abreviatura));
+    }
+
+    @Override
+    @Transactional
+    public UnidadMedidaDTO crear(UnidadMedidaDTO dto) {
+        if (repository.existsByDescripcionIgnoreCase(dto.getDescripcion())) {
+            throw new IllegalArgumentException("Ya existe una unidad con la descripción: " + dto.getDescripcion());
+        }
+        if (repository.existsByAbreviaturaIgnoreCase(dto.getAbreviatura())) {
+            throw new IllegalArgumentException("Ya existe una unidad con la abreviatura: " + dto.getAbreviatura());
+        }
+
+        UnidadMedida entidad = mapper.toEntity(dto);
+        entidad.setIdUnidadMedida(null);
+        entidad.setEstado(true);
+
+        return mapper.toDTO(repository.save(entidad));
+    }
+
+    @Override
+    @Transactional
+    public UnidadMedidaDTO actualizar(Long id, UnidadMedidaDTO dto) {
+        UnidadMedida existente = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Unidad de Medida no encontrada con el ID: " + id));
+
+        if (repository.existsByDescripcionIgnoreCaseAndIdUnidadMedidaNot(dto.getDescripcion(), id)) {
+            throw new IllegalArgumentException("Ya existe otra unidad con la descripción: " + dto.getDescripcion());
+        }
+        if (repository.existsByAbreviaturaIgnoreCaseAndIdUnidadMedidaNot(dto.getAbreviatura(), id)) {
+            throw new IllegalArgumentException("Ya existe otra unidad con la abreviatura: " + dto.getAbreviatura());
+        }
+
+        mapper.updateEntity(dto, existente);
+
+        return mapper.toDTO(repository.save(existente));
+    }
+
+    @Override
+    @Transactional
+    public void eliminarLogico(Long id) {
+        UnidadMedida existente = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Unidad de Medida no encontrada con el ID: " + id));
+        existente.setEstado(false);
+        repository.save(existente);
     }
 }

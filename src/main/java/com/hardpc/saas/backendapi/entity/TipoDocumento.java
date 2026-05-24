@@ -25,6 +25,12 @@ public class TipoDocumento extends AuditoriaBase {
     @Column(nullable = false, unique = true, length = 50)
     private String nombre;
 
+    @NotBlank(message = "La abreviatura es obligatoria")
+    @Size(min = 2, max = 10, message = "La abreviatura debe tener entre 2 y 10 caracteres")
+    @Pattern(regexp = "^[A-Z0-9]+$", message = "La abreviatura solo debe contener letras mayúsculas y números (ej. DNI, RUC)")
+    @Column(nullable = false, unique = true, length = 10)
+    private String abreviatura;
+
     @NotNull(message = "La longitud exacta es obligatoria")
     @Min(value = 1, message = "La longitud debe ser al menos 1")
     @Max(value = 20, message = "La longitud no puede ser mayor a 20")

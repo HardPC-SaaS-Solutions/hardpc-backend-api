@@ -1,13 +1,16 @@
 package com.hardpc.saas.backendapi.controller;
 
-import com.hardpc.saas.backendapi.entity.TipoComprobante;
+import com.hardpc.saas.backendapi.dto.TipoComprobanteDTO;
 import com.hardpc.saas.backendapi.service.TipoComprobanteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -15,32 +18,43 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TipoComprobanteRestController {
 
-    private final TipoComprobanteService tipoComprobanteService;
+    private final TipoComprobanteService service;
 
     @GetMapping
-    public ResponseEntity<List<TipoComprobante>> listar() {
-        return ResponseEntity.ok(tipoComprobanteService.listarTodos());
+    public ResponseEntity<Page<TipoComprobanteDTO>> listarPaginado(
+            @RequestParam(required = false, defaultValue = "") String buscar,
+            @PageableDefault(size = 10, sort = "descripcion") Pageable pageable) {
+        return ResponseEntity.ok(service.listarPaginado(buscar, pageable));
+    }
+
+    @GetMapping("/combo")
+    public ResponseEntity<List<TipoComprobanteDTO>> listarParaCombo() {
+        return ResponseEntity.ok(service.listarActivosParaCombo());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TipoComprobante> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(tipoComprobanteService.buscarPorId(id));
+    public ResponseEntity<TipoComprobanteDTO> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(service.buscarPorId(id));
+    }
+
+    @GetMapping("/sunat/{codigo}")
+    public ResponseEntity<TipoComprobanteDTO> buscarPorCodigoSunat(@PathVariable String codigo) {
+        return ResponseEntity.ok(service.buscarPorCodigoSunat(codigo));
     }
 
     @PostMapping
-    public ResponseEntity<TipoComprobante> crear(@Valid @RequestBody TipoComprobante tipoComprobante) {
-        TipoComprobante creado = tipoComprobanteService.crear(tipoComprobante);
-        return ResponseEntity.created(URI.create("/api/tipos-comprobantes/" + creado.getIdTipoComprobante())).body(creado);
+    public ResponseEntity<TipoComprobanteDTO> crear(@Valid @RequestBody TipoComprobanteDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TipoComprobante> actualizar(@PathVariable Long id, @Valid @RequestBody TipoComprobante tipoComprobante) {
-        return ResponseEntity.ok(tipoComprobanteService.actualizar(id, tipoComprobante));
+    public ResponseEntity<TipoComprobanteDTO> actualizar(@PathVariable Long id, @Valid @RequestBody TipoComprobanteDTO dto) {
+        return ResponseEntity.ok(service.actualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        tipoComprobanteService.eliminar(id);
+    public ResponseEntity<Void> eliminarLogico(@PathVariable Long id) {
+        service.eliminarLogico(id);
         return ResponseEntity.noContent().build();
     }
 }

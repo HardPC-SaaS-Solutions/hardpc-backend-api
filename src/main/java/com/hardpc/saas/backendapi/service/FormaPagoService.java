@@ -1,12 +1,17 @@
 package com.hardpc.saas.backendapi.service;
 
-import com.hardpc.saas.backendapi.entity.FormaPago;
+import com.hardpc.saas.backendapi.dto.FormaPagoDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface FormaPagoService {
-    List<FormaPago> listarTodos();
-    FormaPago buscarPorId(Long id);
-    FormaPago crear(FormaPago formaPago);
-    FormaPago actualizar(Long id, FormaPago formaPago);
-    void eliminar(Long id);
+    Page<FormaPagoDTO> listarPaginado(String buscar, Pageable pageable);
+    List<FormaPagoDTO> listarActivosParaCombo();
+    FormaPagoDTO buscarPorId(Long id);
+    FormaPagoDTO buscarPorDescripcion(String descripcion);
+    FormaPagoDTO crear(FormaPagoDTO dto);
+    FormaPagoDTO actualizar(Long id, FormaPagoDTO dto);
+    void eliminarLogico(Long id);
 }

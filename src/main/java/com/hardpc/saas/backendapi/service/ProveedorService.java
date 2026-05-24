@@ -1,12 +1,15 @@
 package com.hardpc.saas.backendapi.service;
 
-import com.hardpc.saas.backendapi.entity.Proveedor;
-import java.util.List;
+import com.hardpc.saas.backendapi.dto.ProveedorRequestDTO;
+import com.hardpc.saas.backendapi.dto.ProveedorResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ProveedorService {
-    List<Proveedor> listarTodos();
-    Proveedor buscarPorId(Long id);
-    Proveedor crear(Proveedor proveedor);
-    Proveedor actualizar(Long id, Proveedor proveedor);
-    void eliminar(Long id);
+    Page<ProveedorResponseDTO> listarPaginado(String buscar, Pageable pageable);
+    ProveedorResponseDTO buscarPorId(Long id);
+    ProveedorResponseDTO crear(ProveedorRequestDTO dto);
+    ProveedorResponseDTO actualizar(Long id, ProveedorRequestDTO dto);
+    void eliminarLogico(Long id);
+    void reactivar(Long id);
 }
