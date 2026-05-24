@@ -62,9 +62,6 @@ public class MovimientoInventarioServiceImpl implements MovimientoInventarioServ
     @Override
     @Transactional(readOnly = true)
     public Page<MovimientoInventarioResponseDTO> filtrarHistorial(LocalDateTime fechaInicio, LocalDateTime fechaFin, TipoMovimiento tipo, Pageable pageable) {
-        if (fechaInicio == null || fechaFin == null) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "ERR_FECHAS_REQUERIDAS", "Debe enviar un rango de fechas válido.");
-        }
         return repository.buscarPorFiltrosAuditoria(fechaInicio, fechaFin, tipo, pageable)
                 .map(mapper::toResponseDTO);
     }
