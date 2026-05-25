@@ -90,17 +90,48 @@ public class VentaServiceImpl implements VentaService {
         // --- FIX DE SEGURIDAD: Inyectamos el usuario real ---
         entidad.setUsuario(cajeroLogueado);
 
-        // Inyectar el precio histórico en los detalles
-        for (DetalleVenta detalle : entidad.getDetalles()) {
-            Producto producto = productoRepository.findById(detalle.getProducto().getIdProducto()).get();
-            detalle.setPrecioVentaUnitario(producto.getPrecioUsd());
+        // --- FIX ARQUITECTÓNICO: Explosión de líneas para Serializados ---
+        entidad.getDetalles().clear(); // Borramos el mapeo agrupado por defecto
+
+        for (VentaRequestDTO.DetalleRequestDTO detDto : dto.getDetalles()) {
+            Producto producto = productoRepository.findById(detDto.getIdProducto()).get();
+            BigDecimal precioReal = producto.getPrecioUsd();
+
+            if (Boolean.TRUE.equals(producto.getEsSerializado())) {
+                // Dividimos el descuento equitativamente entre las unidades
+                BigDecimal cantDecimal = BigDecimal.valueOf(detDto.getCantidad());
+                BigDecimal descUnitario = detDto.getDescuento().divide(cantDecimal, 2, RoundingMode.HALF_UP);
+
+                for (String serial : detDto.getNumerosSerie()) {
+                    ItemSerial item = itemSerialRepository.findByNumeroSerieIgnoreCase(serial).get();
+
+                    DetalleVenta nuevoDetalle = new DetalleVenta();
+                    nuevoDetalle.setVenta(entidad);
+                    nuevoDetalle.setProducto(producto);
+                    nuevoDetalle.setCantidad(1); // Viajan de 1 en 1
+                    nuevoDetalle.setPrecioVentaUnitario(precioReal);
+                    nuevoDetalle.setDescuento(descUnitario);
+                    nuevoDetalle.setItemSerial(item); // Enlace directo a la tabla ItemSerial
+
+                    entidad.getDetalles().add(nuevoDetalle);
+                }
+            } else {
+                DetalleVenta nuevoDetalle = new DetalleVenta();
+                nuevoDetalle.setVenta(entidad);
+                nuevoDetalle.setProducto(producto);
+                nuevoDetalle.setCantidad(detDto.getCantidad());
+                nuevoDetalle.setPrecioVentaUnitario(precioReal);
+                nuevoDetalle.setDescuento(detDto.getDescuento());
+                nuevoDetalle.setItemSerial(null);
+
+                entidad.getDetalles().add(nuevoDetalle);
+            }
         }
 
-        // El @AfterMapping del mapper enlaza bidireccionalmente los detalles
         Venta ventaGuardada = repository.save(entidad);
 
-        // 5. Orquestación Colateral (Pasamos el ID del cajero real)
-        orquestarEfectosColaterales(dto, ventaGuardada, cajeroLogueado.getIdPersona());
+        // Pasamos los datos directos en lugar del DTO para asegurar coherencia
+        orquestarEfectosColaterales(ventaGuardada, cajeroLogueado.getIdPersona(), dto.getIdLocal(), dto.getIdCliente());
 
         return mapper.toResponseDTO(ventaGuardada);
     }
@@ -218,48 +249,37 @@ public class VentaServiceImpl implements VentaService {
         }
     }
 
-    private void orquestarEfectosColaterales(VentaRequestDTO dto, Venta ventaGuardada, Long idUsuarioReal) {
-        for (int i = 0; i < dto.getDetalles().size(); i++) {
-            VentaRequestDTO.DetalleRequestDTO detDto = dto.getDetalles().get(i);
-            DetalleVenta detGuardado = ventaGuardada.getDetalles().get(i);
+    private void orquestarEfectosColaterales(Venta ventaGuardada, Long idUsuarioReal, Long idLocalOrigen, Long idCliente) {
 
-            Producto producto = productoRepository.findById(detDto.getIdProducto()).get();
+        for (DetalleVenta detGuardado : ventaGuardada.getDetalles()) {
+            Producto producto = detGuardado.getProducto();
 
             if (Boolean.TRUE.equals(producto.getEsSerializado())) {
-                // Registrar cada serial por separado en el Ledger
-                for (String serial : detDto.getNumerosSerie()) {
-                    ItemSerial item = itemSerialRepository.findByNumeroSerieIgnoreCase(serial).get();
+                // Extraemos el serial directo de la base de datos (ya lo mapeamos arriba)
+                ItemSerial item = detGuardado.getItemSerial();
+                item.setEstadoDisponibilidad(EstadoDisponibilidad.VENDIDO);
+                itemSerialRepository.save(item);
 
-                    // 1. Cambiar estado físico para activar Garantía / Bloquear reventas
-                    item.setEstadoDisponibilidad(EstadoDisponibilidad.VENDIDO);
-                    itemSerialRepository.save(item);
-
-                    // 2. Registrar en Ledger (SALIDA unitaria)
-                    // NOTA ARQUITECTÓNICA: Usaremos ItemSerial en el propio detalle guardado si tu modelo de datos lo permitiese,
-                    // pero según tu Entity, DetalleVenta tiene FK a id_item_serial. Como es un modelo agrupado en DTO (List<String>),
-                    // dejamos el DetalleVenta.idItemSerial null y registramos la salida física exacta en el Ledger contable.
-                    registrarSalidaLedger(dto, detDto.getIdProducto(), 1, item.getIdItemSerial(), idUsuarioReal);
-                }
+                registrarSalidaLedger(ventaGuardada, producto.getIdProducto(), 1, item.getIdItemSerial(), idUsuarioReal, idLocalOrigen, idCliente);
             } else {
-                // Registrar salida a granel en el Ledger
-                registrarSalidaLedger(dto, detDto.getIdProducto(), detDto.getCantidad(), null, idUsuarioReal);
+                // Producto a granel
+                registrarSalidaLedger(ventaGuardada, producto.getIdProducto(), detGuardado.getCantidad(), null, idUsuarioReal, idLocalOrigen, idCliente);
             }
         }
     }
 
-    private void registrarSalidaLedger(VentaRequestDTO dto, Long idProducto, Integer cantidad, Long idItemSerial, Long idUsuarioReal) {
-        String nombreCliente = clienteRepository.obtenerNombreAplanadoPorId(dto.getIdCliente());
+    private void registrarSalidaLedger(Venta venta, Long idProducto, Integer cantidad, Long idItemSerial, Long idUsuarioReal, Long idLocalOrigen, Long idCliente) {
+        String nombreCliente = clienteRepository.obtenerNombreAplanadoPorId(idCliente);
 
         MovimientoInventarioRequestDTO mov = new MovimientoInventarioRequestDTO();
         mov.setTipoMovimiento(TipoMovimiento.SALIDA);
-        // --- FIX DE SEGURIDAD: Usamos el ID del servidor, no del DTO ---
         mov.setIdUsuario(idUsuarioReal);
         mov.setIdProducto(idProducto);
         mov.setCantidad(cantidad);
-        mov.setIdLocalOrigen(dto.getIdLocal()); // Origen porque es una Salida
+        mov.setIdLocalOrigen(idLocalOrigen);
         mov.setIdItemSerial(idItemSerial);
         mov.setObservacion(String.format("VENTA DIRECTA. Fac: %s-%s. Cliente: %s",
-                dto.getSerieComprobante(), dto.getNumeroComprobante(), nombreCliente.trim()));
+                venta.getSerieComprobante(), venta.getNumeroComprobante(), nombreCliente.trim()));
 
         movimientoInventarioService.registrarMovimiento(mov);
     }
