@@ -5,6 +5,7 @@ import com.hardpc.saas.backendapi.dto.StockLocalRequestDTO;
 import com.hardpc.saas.backendapi.dto.StockLocalResponseDTO;
 import com.hardpc.saas.backendapi.entity.Producto;
 import com.hardpc.saas.backendapi.entity.StockLocal;
+import com.hardpc.saas.backendapi.enums.TipoMovimiento;
 import com.hardpc.saas.backendapi.exception.custom.BusinessException;
 import com.hardpc.saas.backendapi.mapper.StockLocalMapper;
 import com.hardpc.saas.backendapi.repository.LocalRepository;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -105,6 +107,50 @@ public class StockLocalServiceImpl implements StockLocalService {
         String termino = (buscar == null) ? "" : buscar.trim();
         return repository.buscarEnLocalPaginado(idLocal, termino, pageable)
                 .map(mapper::toResponseDTO);
+    }
+
+    @Override
+    @Transactional
+    public void actualizarStock(Long idProducto, Long idLocal, Integer cantidad, TipoMovimiento tipoMovimiento) {
+
+        // 1. Buscamos el stock bloqueando la fila en la BD para otras transacciones
+        Optional<StockLocal> optStock = repository.findByProducto_IdProductoAndLocal_IdLocal(idProducto, idLocal);
+
+        if (optStock.isEmpty()) {
+            // Regla: No puedes sacar lo que no existe
+            if (tipoMovimiento == TipoMovimiento.SALIDA) { // O AJUSTE_NEGATIVO si lo tuvieras
+                throw new BusinessException(HttpStatus.CONFLICT, "ERR_STOCK_INCONSISTENTE",
+                        "No se puede realizar una SALIDA. No existe un registro previo de stock para este producto en el local destino.");
+            }
+
+            // Si no existe y es ENTRADA: Lo creamos inyectando PROXIES
+            StockLocal nuevoStock = new StockLocal();
+            // getReferenceById no hace SELECT a la BD, solo crea un cascarón con el ID para la llave foránea
+            nuevoStock.setProducto(productoRepository.getReferenceById(idProducto));
+            nuevoStock.setLocal(localRepository.getReferenceById(idLocal));
+            nuevoStock.setCantidadActual(cantidad);
+            nuevoStock.setStockMinimo(0); // Valor inicial por defecto prudente
+
+            repository.save(nuevoStock);
+
+        } else {
+            StockLocal stockExistente = optStock.get();
+
+            // Matemática según el tipo de movimiento
+            if (tipoMovimiento == TipoMovimiento.ENTRADA) { // O AJUSTE_POSITIVO
+                stockExistente.setCantidadActual(stockExistente.getCantidadActual() + cantidad);
+            }
+            else if (tipoMovimiento == TipoMovimiento.SALIDA) { // O AJUSTE_NEGATIVO
+                if (stockExistente.getCantidadActual() < cantidad) {
+                    throw new BusinessException(HttpStatus.CONFLICT, "ERR_STOCK_INSUFICIENTE",
+                            "Stock físico insuficiente en el local. Tienes " + stockExistente.getCantidadActual() +
+                                    " pero intentas sacar " + cantidad + ".");
+                }
+                stockExistente.setCantidadActual(stockExistente.getCantidadActual() - cantidad);
+            }
+
+            repository.save(stockExistente);
+        }
     }
 
     // --- VALIDACIONES DE NEGOCIO PRIVADAS ---

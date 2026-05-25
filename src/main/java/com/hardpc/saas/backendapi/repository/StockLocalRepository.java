@@ -2,14 +2,19 @@ package com.hardpc.saas.backendapi.repository;
 
 import com.hardpc.saas.backendapi.dto.InversionStockDTO;
 import com.hardpc.saas.backendapi.entity.StockLocal;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface StockLocalRepository extends JpaRepository<StockLocal, Long> {
@@ -36,4 +41,9 @@ public interface StockLocalRepository extends JpaRepository<StockLocal, Long> {
     // Verifica si hay stock físico suficiente para una venta
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM StockLocal s WHERE s.producto.idProducto = :idProducto AND s.local.idLocal = :idLocal AND s.cantidadActual >= :cantidadRequerida")
     boolean hasStockSuficiente(@Param("idProducto") Long idProducto, @Param("idLocal") Long idLocal, @Param("cantidadRequerida") Integer cantidadRequerida);
+
+    // --- BLOQUEO PESIMISTA: Prevención de Condiciones de Carrera (Race Conditions) ---
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})
+    Optional<StockLocal> findByProducto_IdProductoAndLocal_IdLocal(Long idProducto, Long idLocal);
 }
