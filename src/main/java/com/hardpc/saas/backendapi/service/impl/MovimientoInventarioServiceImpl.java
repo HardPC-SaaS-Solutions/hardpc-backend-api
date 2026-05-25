@@ -2,8 +2,10 @@ package com.hardpc.saas.backendapi.service.impl;
 
 import com.hardpc.saas.backendapi.dto.MovimientoInventarioRequestDTO;
 import com.hardpc.saas.backendapi.dto.MovimientoInventarioResponseDTO;
+import com.hardpc.saas.backendapi.entity.ItemSerial;
 import com.hardpc.saas.backendapi.entity.MovimientoInventario;
 import com.hardpc.saas.backendapi.entity.Producto;
+import com.hardpc.saas.backendapi.enums.EstadoDisponibilidad;
 import com.hardpc.saas.backendapi.enums.TipoMovimiento;
 import com.hardpc.saas.backendapi.exception.custom.BusinessException;
 import com.hardpc.saas.backendapi.mapper.MovimientoInventarioMapper;
@@ -129,6 +131,15 @@ public class MovimientoInventarioServiceImpl implements MovimientoInventarioServ
                 Long idLocalAfectado = (dto.getIdLocalOrigen() != null) ? dto.getIdLocalOrigen() : dto.getIdLocalDestino();
                 stockLocalService.actualizarStock(dto.getIdProducto(), idLocalAfectado, dto.getCantidad(), dto.getTipoMovimiento());
             }
+        } else {
+            // --- FIX: LÓGICA SERIALIZADA ---
+            // Si es un traslado, debemos cambiar la ubicación física de la máquina
+            if (dto.getTipoMovimiento() == TipoMovimiento.TRASLADO) {
+                ItemSerial item = itemSerialRepository.findById(dto.getIdItemSerial()).get();
+                // Movemos el ItemSerial al nuevo local
+                item.setLocal(localRepository.getReferenceById(dto.getIdLocalDestino()));
+                itemSerialRepository.save(item);
+            }
         }
 
         return mapper.toResponseDTO(guardado);
@@ -173,8 +184,30 @@ public class MovimientoInventarioServiceImpl implements MovimientoInventarioServ
             if (dto.getIdItemSerial() == null) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "ERR_SERIAL_REQUERIDO", "Debe indicar el ItemSerial específico que se está moviendo.");
             }
-            if (!itemSerialRepository.existsById(dto.getIdItemSerial())) {
-                throw new BusinessException(HttpStatus.NOT_FOUND, "ERR_SERIAL_NOT_FOUND", "El ItemSerial especificado no existe.");
+
+            // --- EL GRAN BLINDAJE QUE DETECTASTE ---
+            // Traemos el item serial completo para auditar su estado real en el almacén
+            ItemSerial item = itemSerialRepository.findById(dto.getIdItemSerial())
+                    .orElseThrow(() -> new EntityNotFoundException("El ItemSerial especificado no existe."));
+
+            // 1. Validar que el serial pertenezca al producto seleccionado
+            if (!item.getProducto().getIdProducto().equals(producto.getIdProducto())) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "ERR_SERIAL_INCORRECTO", "El serial no pertenece al producto seleccionado.");
+            }
+
+            // 2. Control de Ubicación Física Obligatoria para SALIDAS y TRASLADOS
+            if (dto.getTipoMovimiento() == TipoMovimiento.TRASLADO || dto.getTipoMovimiento() == TipoMovimiento.SALIDA) {
+                if (!item.getLocal().getIdLocal().equals(dto.getIdLocalOrigen())) {
+                    throw new BusinessException(HttpStatus.CONFLICT, "ERR_SERIAL_UBICACION_INCORRECTA",
+                            String.format("Inconsistencia de Almacén: El número de serie '%s' no se encuentra en el local origen seleccionado (Se encuentra en: %s).",
+                                    item.getNumeroSerie(), item.getLocal().getNombre()));
+                }
+            }
+
+            // 3. Control de Estado: No puedes trasladar una laptop que ya fue VENDIDA o dada de baja
+            if (dto.getTipoMovimiento() == TipoMovimiento.TRASLADO && item.getEstadoDisponibilidad() != EstadoDisponibilidad.DISPONIBLE) {
+                throw new BusinessException(HttpStatus.CONFLICT, "ERR_SERIAL_ESTADO_INVALIDO",
+                        "No se puede trasladar el producto porque su estado actual es: " + item.getEstadoDisponibilidad());
             }
         } else {
             if (dto.getIdItemSerial() != null) {
