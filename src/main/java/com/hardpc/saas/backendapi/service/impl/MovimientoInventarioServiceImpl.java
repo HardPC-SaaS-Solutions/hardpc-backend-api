@@ -9,6 +9,7 @@ import com.hardpc.saas.backendapi.exception.custom.BusinessException;
 import com.hardpc.saas.backendapi.mapper.MovimientoInventarioMapper;
 import com.hardpc.saas.backendapi.repository.*;
 import com.hardpc.saas.backendapi.service.MovimientoInventarioService;
+import com.hardpc.saas.backendapi.service.StockLocalService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.hardpc.saas.backendapi.security.CustomUserDetails;
+import com.hardpc.saas.backendapi.entity.Usuario;
 
 import java.time.LocalDateTime;
 
@@ -28,6 +33,7 @@ public class MovimientoInventarioServiceImpl implements MovimientoInventarioServ
     private final LocalRepository localRepository;
     private final ItemSerialRepository itemSerialRepository;
     private final UsuarioRepository usuarioRepository;
+    private final StockLocalService stockLocalService;
     private final MovimientoInventarioMapper mapper;
 
     @Override
@@ -71,9 +77,22 @@ public class MovimientoInventarioServiceImpl implements MovimientoInventarioServ
     public MovimientoInventarioResponseDTO registrarMovimiento(MovimientoInventarioRequestDTO dto) {
 
         // 1. Validar existencia de Usuario
-        if (!usuarioRepository.existsById(dto.getIdUsuario())) {
-            throw new BusinessException(HttpStatus.NOT_FOUND, "ERR_USUARIO_NOT_FOUND", "El usuario responsable no existe.");
+        // --- FIX DE SEGURIDAD: Extraer el usuario autenticado del JWT ---
+        // (Nota: Como este método a veces es llamado internamente por Venta/Compra,
+        // validamos si ya hay un usuario en el DTO (inyectado por el orquestador padre).
+        // Si es un ajuste manual directo por API, lo sacamos del Token).
+        Long idUsuarioReal;
+        if (dto.getIdUsuario() != null) {
+            idUsuarioReal = dto.getIdUsuario();
+            if (!usuarioRepository.existsById(idUsuarioReal)) {
+                throw new BusinessException(HttpStatus.NOT_FOUND, "ERR_USUARIO_NOT_FOUND", "El usuario responsable no existe.");
+            }
+        } else {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+            idUsuarioReal = userDetails.getUsuario().getIdPersona();
         }
+        // -----------------------------------------------------------------
 
         // 2. Extraer Producto para validación de serialización
         Producto producto = productoRepository.findById(dto.getIdProducto())
@@ -88,10 +107,31 @@ public class MovimientoInventarioServiceImpl implements MovimientoInventarioServ
         entidad.setIdMovimiento(null);
         entidad.setFechaHora(LocalDateTime.now());
 
+        // --- FIX DE SEGURIDAD: Asignar la referencia del usuario real ---
+        entidad.setUsuario(usuarioRepository.getReferenceById(idUsuarioReal));
+
         // 5. Limpieza de Cascarones (TransientPropertyValueException Prevention)
         limpiarCascaronesVacios(dto, entidad);
 
-        return mapper.toResponseDTO(repository.save(entidad));
+        MovimientoInventario guardado = repository.save(entidad);
+
+        // --- BLOQUEO TRANSACCIONAL: ACTUALIZACIÓN SÍNCRONA DE STOCK FÍSICO ---
+
+        // NOTA: Ignoramos los productos serializados, ellos no mueven cantidades aquí, se gestionan por ItemSerial
+        if (!Boolean.TRUE.equals(producto.getEsSerializado())) {
+
+            if (dto.getTipoMovimiento() == TipoMovimiento.TRASLADO) {
+                // Traslado = 2 Operaciones atómicas. Primero sale del origen, luego entra al destino.
+                stockLocalService.actualizarStock(dto.getIdProducto(), dto.getIdLocalOrigen(), dto.getCantidad(), TipoMovimiento.SALIDA);
+                stockLocalService.actualizarStock(dto.getIdProducto(), dto.getIdLocalDestino(), dto.getCantidad(), TipoMovimiento.ENTRADA);
+            } else {
+                // Entrada o Salida estándar = 1 Operación atómica.
+                Long idLocalAfectado = (dto.getIdLocalOrigen() != null) ? dto.getIdLocalOrigen() : dto.getIdLocalDestino();
+                stockLocalService.actualizarStock(dto.getIdProducto(), idLocalAfectado, dto.getCantidad(), dto.getTipoMovimiento());
+            }
+        }
+
+        return mapper.toResponseDTO(guardado);
     }
 
     // --- MÉTODOS DE VALIDACIÓN PRIVADOS ---

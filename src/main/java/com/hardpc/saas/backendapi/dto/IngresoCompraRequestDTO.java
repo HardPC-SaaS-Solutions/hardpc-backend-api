@@ -16,8 +16,8 @@ public class IngresoCompraRequestDTO {
     @NotNull(message = "El tipo de comprobante es obligatorio")
     private Long idTipoComprobante;
 
-    @NotNull(message = "El usuario es obligatorio")
-    private Long idUsuario;
+    //@NotNull(message = "El usuario es obligatorio")
+    //private Long idUsuario;
 
     @NotNull(message = "El local destino es obligatorio")
     private Long idLocal;

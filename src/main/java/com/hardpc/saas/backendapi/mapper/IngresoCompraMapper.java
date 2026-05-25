@@ -20,7 +20,7 @@ public interface IngresoCompraMapper {
     // --- DE REQUEST A ENTIDAD (Cabecera) ---
     @Mapping(source = "idProveedor", target = "proveedor.idProveedor")
     @Mapping(source = "idTipoComprobante", target = "tipoComprobante.idTipoComprobante")
-    @Mapping(source = "idUsuario", target = "usuario.idPersona")
+    //@Mapping(source = "idUsuario", target = "usuario.idPersona")
     @Mapping(source = "idLocal", target = "local.idLocal")
     IngresoCompra toEntity(IngresoCompraRequestDTO dto);
 

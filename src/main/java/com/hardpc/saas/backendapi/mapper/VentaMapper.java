@@ -19,7 +19,7 @@ public interface VentaMapper {
 
     // --- DE REQUEST A ENTIDAD (Cabecera) ---
     @Mapping(source = "idCliente", target = "cliente.idPersona")
-    @Mapping(source = "idUsuario", target = "usuario.idPersona")
+    //@Mapping(source = "idUsuario", target = "usuario.idPersona")
     @Mapping(source = "idTipoComprobante", target = "tipoComprobante.idTipoComprobante")
     @Mapping(source = "idFormaPago", target = "formaPago.idFormaPago")
     @Mapping(source = "idLocal", target = "local.idLocal")

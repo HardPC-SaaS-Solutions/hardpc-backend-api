@@ -17,6 +17,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.hardpc.saas.backendapi.security.CustomUserDetails;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -62,6 +65,12 @@ public class VentaServiceImpl implements VentaService {
     @Transactional(rollbackFor = Exception.class) // ESTRICTO: Cualquier error interno cancela la venta entera
     public VentaResponseDTO registrarVenta(VentaRequestDTO dto) {
 
+        // --- FIX DE SEGURIDAD: Extraer el cajero autenticado del JWT ---
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Usuario cajeroLogueado = userDetails.getUsuario();
+        // ---------------------------------------------------------------
+
         // 1. Validaciones Maestras y Ligeras
         validarMaestras(dto);
         validarDocumentoUnico(dto);
@@ -76,14 +85,22 @@ public class VentaServiceImpl implements VentaService {
         Venta entidad = mapper.toEntity(dto);
         entidad.setIdVenta(null);
         entidad.setEstadoVenta(EstadoVenta.REGISTRADA);
-
         entidad.setFechaVenta(LocalDateTime.now());
+
+        // --- FIX DE SEGURIDAD: Inyectamos el usuario real ---
+        entidad.setUsuario(cajeroLogueado);
+
+        // Inyectar el precio histórico en los detalles
+        for (DetalleVenta detalle : entidad.getDetalles()) {
+            Producto producto = productoRepository.findById(detalle.getProducto().getIdProducto()).get();
+            detalle.setPrecioVentaUnitario(producto.getPrecioUsd());
+        }
 
         // El @AfterMapping del mapper enlaza bidireccionalmente los detalles
         Venta ventaGuardada = repository.save(entidad);
 
-        // 5. Orquestación Colateral (Actualizar estado de Seriales y grabar en Ledger)
-        orquestarEfectosColaterales(dto, ventaGuardada);
+        // 5. Orquestación Colateral (Pasamos el ID del cajero real)
+        orquestarEfectosColaterales(dto, ventaGuardada, cajeroLogueado.getIdPersona());
 
         return mapper.toResponseDTO(ventaGuardada);
     }
@@ -110,7 +127,6 @@ public class VentaServiceImpl implements VentaService {
         // En lugar de instanciar entidades completas para validar, usamos existsById, lo cual
         // genera un "SELECT 1" ultra-rápido en BBDD ahorrando memoria transaccional.
         if (!clienteRepository.existsById(dto.getIdCliente())) throw new EntityNotFoundException("Cliente no existe.");
-        if (!usuarioRepository.existsById(dto.getIdUsuario())) throw new EntityNotFoundException("Usuario no existe.");
         if (!tipoComprobanteRepository.existsById(dto.getIdTipoComprobante())) throw new EntityNotFoundException("Tipo comprobante no existe.");
         if (!formaPagoRepository.existsById(dto.getIdFormaPago())) throw new EntityNotFoundException("Forma de pago no existe.");
         if (!localRepository.existsById(dto.getIdLocal())) throw new EntityNotFoundException("Local no existe.");
@@ -127,8 +143,17 @@ public class VentaServiceImpl implements VentaService {
         BigDecimal subtotal = BigDecimal.ZERO;
 
         for (VentaRequestDTO.DetalleRequestDTO det : dto.getDetalles()) {
+
+            // 1. Extraemos el producto de la BD para sacar su precio real
+            Producto producto = productoRepository.findById(det.getIdProducto())
+                    .orElseThrow(() -> new EntityNotFoundException("Producto ID " + det.getIdProducto() + " no existe."));
+
+            BigDecimal precioReal = producto.getPrecioUsd();
+
             BigDecimal cantidad = BigDecimal.valueOf(det.getCantidad());
-            BigDecimal subtotalLineaBruto = cantidad.multiply(det.getPrecioVentaUnitario());
+
+            // 2. Multiplicamos la cantidad por el precio blindado del servidor
+            BigDecimal subtotalLineaBruto = cantidad.multiply(precioReal);
 
             if (det.getDescuento().compareTo(subtotalLineaBruto) > 0) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "ERR_DESCUENTO_EXCESIVO", "El descuento no puede ser mayor al precio total de la línea.");
@@ -193,7 +218,7 @@ public class VentaServiceImpl implements VentaService {
         }
     }
 
-    private void orquestarEfectosColaterales(VentaRequestDTO dto, Venta ventaGuardada) {
+    private void orquestarEfectosColaterales(VentaRequestDTO dto, Venta ventaGuardada, Long idUsuarioReal) {
         for (int i = 0; i < dto.getDetalles().size(); i++) {
             VentaRequestDTO.DetalleRequestDTO detDto = dto.getDetalles().get(i);
             DetalleVenta detGuardado = ventaGuardada.getDetalles().get(i);
@@ -213,21 +238,22 @@ public class VentaServiceImpl implements VentaService {
                     // NOTA ARQUITECTÓNICA: Usaremos ItemSerial en el propio detalle guardado si tu modelo de datos lo permitiese,
                     // pero según tu Entity, DetalleVenta tiene FK a id_item_serial. Como es un modelo agrupado en DTO (List<String>),
                     // dejamos el DetalleVenta.idItemSerial null y registramos la salida física exacta en el Ledger contable.
-                    registrarSalidaLedger(dto, detDto.getIdProducto(), 1, item.getIdItemSerial());
+                    registrarSalidaLedger(dto, detDto.getIdProducto(), 1, item.getIdItemSerial(), idUsuarioReal);
                 }
             } else {
                 // Registrar salida a granel en el Ledger
-                registrarSalidaLedger(dto, detDto.getIdProducto(), detDto.getCantidad(), null);
+                registrarSalidaLedger(dto, detDto.getIdProducto(), detDto.getCantidad(), null, idUsuarioReal);
             }
         }
     }
 
-    private void registrarSalidaLedger(VentaRequestDTO dto, Long idProducto, Integer cantidad, Long idItemSerial) {
+    private void registrarSalidaLedger(VentaRequestDTO dto, Long idProducto, Integer cantidad, Long idItemSerial, Long idUsuarioReal) {
         String nombreCliente = clienteRepository.obtenerNombreAplanadoPorId(dto.getIdCliente());
 
         MovimientoInventarioRequestDTO mov = new MovimientoInventarioRequestDTO();
         mov.setTipoMovimiento(TipoMovimiento.SALIDA);
-        mov.setIdUsuario(dto.getIdUsuario());
+        // --- FIX DE SEGURIDAD: Usamos el ID del servidor, no del DTO ---
+        mov.setIdUsuario(idUsuarioReal);
         mov.setIdProducto(idProducto);
         mov.setCantidad(cantidad);
         mov.setIdLocalOrigen(dto.getIdLocal()); // Origen porque es una Salida

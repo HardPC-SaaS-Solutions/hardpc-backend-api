@@ -21,6 +21,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.hardpc.saas.backendapi.security.CustomUserDetails;
+import com.hardpc.saas.backendapi.entity.Usuario;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -67,6 +71,12 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
     @Transactional(rollbackFor = Exception.class)
     public IngresoCompraResponseDTO registrarCompra(IngresoCompraRequestDTO dto) {
 
+        // --- FIX DE SEGURIDAD: Extraer el inventarista autenticado del JWT ---
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Usuario usuarioLogueado = userDetails.getUsuario();
+        // ---------------------------------------------------------------------
+
         // 1. Validaciones Maestras de Existencia
         validarMaestras(dto);
 
@@ -84,11 +94,14 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
         entidad.setIdIngreso(null);
         entidad.setEstadoIngreso(EstadoIngreso.REGISTRADO);
 
+        // --- FIX DE SEGURIDAD: Inyectamos el usuario real ---
+        entidad.setUsuario(usuarioLogueado);
+
         // El @AfterMapping del mapper ya conectó los detalles con este padre.
         IngresoCompra compraGuardada = repository.save(entidad);
 
         // 6. ORQUESTACIÓN A SERVICIOS EXTERNOS (Efectos Colaterales Físicos)
-        orquestarEfectosColaterales(dto, compraGuardada);
+        orquestarEfectosColaterales(dto, compraGuardada, usuarioLogueado.getIdPersona());
 
         // NOTA ARQUITECTÓNICA: La actualización del 'StockLocal' no se hace aquí directamente para evitar acoplamiento.
         // La tabla 'MovimientoInventario' y la inserción en 'ItemSerial' dispararán el stock real
@@ -119,7 +132,6 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
         if (!proveedorRepository.existsById(dto.getIdProveedor())) throw new EntityNotFoundException("El proveedor especificado no existe.");
         if (!tipoComprobanteRepository.existsById(dto.getIdTipoComprobante())) throw new EntityNotFoundException("El tipo de comprobante no existe.");
         if (!localRepository.existsById(dto.getIdLocal())) throw new EntityNotFoundException("El local destino no existe.");
-        if (!usuarioRepository.existsById(dto.getIdUsuario())) throw new EntityNotFoundException("El usuario responsable no existe.");
     }
 
     private void validarDocumentoUnico(IngresoCompraRequestDTO dto) {
@@ -192,7 +204,7 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
         }
     }
 
-    private void orquestarEfectosColaterales(IngresoCompraRequestDTO dto, IngresoCompra compraGuardada) {
+    private void orquestarEfectosColaterales(IngresoCompraRequestDTO dto, IngresoCompra compraGuardada, Long idUsuarioReal) {
         // Necesitamos empatar los DTOs de Detalle con las entidades guardadas para obtener los IDs reales (idDetalleIngreso)
         for (int i = 0; i < dto.getDetalles().size(); i++) {
             IngresoCompraRequestDTO.DetalleRequestDTO detDto = dto.getDetalles().get(i);
@@ -205,12 +217,13 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
                 for (String serialStr : detDto.getNumerosSerie()) {
                     // 1. Crear Físico
                     ItemSerialResponseDTO serialCreado = crearItemSerialFisico(detDto.getIdProducto(), dto.getIdLocal(), serialStr, detGuardado.getIdDetalleIngreso());
-                    // 2. Crear Ledger Unitario
-                    registrarMovimientoLedger(dto.getIdUsuario(), dto.getIdLocal(), detDto.getIdProducto(), 1, serialCreado.getId(), compraGuardada);
+                    // 2. Pasamos el ID real
+                    registrarMovimientoLedger(idUsuarioReal, dto.getIdLocal(), detDto.getIdProducto(), 1, serialCreado.getId(), compraGuardada);
                 }
             } else {
                 // Flujo B: Productos a Granel -> Genera 0 físicos, y 1 movimiento en bloque en el Ledger
-                registrarMovimientoLedger(dto.getIdUsuario(), dto.getIdLocal(), detDto.getIdProducto(), detDto.getCantidad(), null, compraGuardada);
+                // Pasamos el ID real
+                registrarMovimientoLedger(idUsuarioReal, dto.getIdLocal(), detDto.getIdProducto(), detDto.getCantidad(), null, compraGuardada);
             }
         }
     }

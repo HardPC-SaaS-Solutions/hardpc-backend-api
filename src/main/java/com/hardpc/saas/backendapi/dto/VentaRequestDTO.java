@@ -13,8 +13,8 @@ public class VentaRequestDTO {
     @NotNull(message = "El cliente es obligatorio")
     private Long idCliente;
 
-    @NotNull(message = "El usuario (vendedor) es obligatorio")
-    private Long idUsuario;
+    //@NotNull(message = "El usuario (vendedor) es obligatorio")
+    //private Long idUsuario;
 
     @NotNull(message = "El tipo de comprobante es obligatorio")
     private Long idTipoComprobante;
@@ -56,9 +56,9 @@ public class VentaRequestDTO {
         @Min(value = 1, message = "La cantidad debe ser al menos 1")
         private Integer cantidad;
 
-        @NotNull(message = "El precio de venta unitario es obligatorio")
-        @PositiveOrZero(message = "El precio no puede ser negativo")
-        private BigDecimal precioVentaUnitario;
+        //@NotNull(message = "El precio de venta unitario es obligatorio")
+        //@PositiveOrZero(message = "El precio no puede ser negativo")
+        //private BigDecimal precioVentaUnitario;
 
         @NotNull(message = "El descuento es obligatorio")
         @PositiveOrZero(message = "El descuento no puede ser negativo")
