@@ -18,4 +18,7 @@ public interface VentaService {
     // BI (Business Intelligence)
     List<IngresoMensualDTO> obtenerReporteIngresoMensual();
     List<VentasPorClienteDTO> obtenerReporteVentasPorCliente();
+
+    // Operaciones Transaccionales
+    VentaResponseDTO anularVenta(Long idVenta);
 }

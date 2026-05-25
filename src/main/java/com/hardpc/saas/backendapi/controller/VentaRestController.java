@@ -66,4 +66,12 @@ public class VentaRestController {
     public ResponseEntity<List<VentasPorClienteDTO>> obtenerReporteVentasPorCliente() {
         return ResponseEntity.ok(service.obtenerReporteVentasPorCliente());
     }
+
+    // --- ANULACIÓN DE VENTA ---
+
+    @PutMapping("/{id}/anular")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR')")
+    public ResponseEntity<VentaResponseDTO> anularVenta(@PathVariable Long id) {
+        return ResponseEntity.ok(service.anularVenta(id));
+    }
 }

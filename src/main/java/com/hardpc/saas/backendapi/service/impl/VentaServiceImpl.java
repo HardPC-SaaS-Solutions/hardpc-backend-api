@@ -136,6 +136,62 @@ public class VentaServiceImpl implements VentaService {
         return mapper.toResponseDTO(ventaGuardada);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public VentaResponseDTO anularVenta(Long idVenta) {
+
+        // 1. Identidad del Servidor (¿Quién está anulando?)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Long idSupervisor = userDetails.getUsuario().getIdPersona();
+
+        // 2. Validaciones Iniciales
+        Venta venta = repository.findById(idVenta)
+                .orElseThrow(() -> new EntityNotFoundException("Venta no encontrada con ID: " + idVenta));
+
+        if (venta.getEstadoVenta() == EstadoVenta.ANULADA) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "ERR_VENTA_YA_ANULADA", "Esta venta ya se encuentra anulada en el sistema.");
+        }
+
+        // 3. Cambio de Estado (Inmutabilidad, no borramos)
+        venta.setEstadoVenta(EstadoVenta.ANULADA);
+        Venta ventaAnulada = repository.save(venta);
+
+        // 4. El Reverso Físico (Orquestación Inversa)
+        for (DetalleVenta detalle : ventaAnulada.getDetalles()) {
+            Producto producto = detalle.getProducto();
+
+            // Plantilla base para el Ledger
+            MovimientoInventarioRequestDTO movReverso = new MovimientoInventarioRequestDTO();
+            movReverso.setTipoMovimiento(TipoMovimiento.ENTRADA);
+            movReverso.setIdUsuario(idSupervisor);
+            movReverso.setIdProducto(producto.getIdProducto());
+            movReverso.setIdLocalDestino(ventaAnulada.getLocal().getIdLocal()); // ENTRADA usa destino
+            movReverso.setObservacion("REVERSO POR ANULACIÓN. Ref: Fac " +
+                    ventaAnulada.getSerieComprobante() + "-" + ventaAnulada.getNumeroComprobante());
+
+            if (Boolean.TRUE.equals(producto.getEsSerializado())) {
+                // A. Liberar el equipo físico
+                ItemSerial item = detalle.getItemSerial();
+                item.setEstadoDisponibilidad(EstadoDisponibilidad.DISPONIBLE);
+                itemSerialRepository.save(item);
+
+                // B. Configurar reverso unitario
+                movReverso.setCantidad(1);
+                movReverso.setIdItemSerial(item.getIdItemSerial());
+            } else {
+                // A. Configurar reverso a granel
+                movReverso.setCantidad(detalle.getCantidad());
+                movReverso.setIdItemSerial(null);
+            }
+
+            // Disparar el reverso en el Ledger (Esto automáticamente sumará el StockLocal)
+            movimientoInventarioService.registrarMovimiento(movReverso);
+        }
+
+        return mapper.toResponseDTO(ventaAnulada);
+    }
+
     // --- BLOQUE 2: REPORTES DE INTELIGENCIA DE NEGOCIO (BI) ---
 
     @Override
