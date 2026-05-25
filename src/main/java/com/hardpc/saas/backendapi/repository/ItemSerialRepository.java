@@ -37,4 +37,6 @@ public interface ItemSerialRepository extends JpaRepository<ItemSerial, Long> {
             "(LOWER(i.numeroSerie) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
             "LOWER(i.producto.codigoSku) LIKE LOWER(CONCAT('%', :buscar, '%')))")
     Page<ItemSerial> buscarPaginadoAvanzado(@Param("buscar") String buscar, @Param("idLocal") Long idLocal, Pageable pageable);
+
+    List<ItemSerial> findByDetalleIngreso_IdDetalleIngreso(Long idDetalleIngreso);
 }

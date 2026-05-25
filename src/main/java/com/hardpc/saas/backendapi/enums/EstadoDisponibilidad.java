@@ -7,5 +7,6 @@ public enum EstadoDisponibilidad {
     EN_GARANTIA,
     DADO_DE_BAJA,
     EN_TRANSITO,
-    EN_REPARACION
+    EN_REPARACION,
+    DEVUELTO_PROVEEDOR
 }

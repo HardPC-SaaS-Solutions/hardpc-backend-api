@@ -26,4 +26,7 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
             "LOWER(COALESCE(c.apellidos, '')) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
             "LOWER(COALESCE(c.razonSocial, '')) LIKE LOWER(CONCAT('%', :buscar, '%'))")
     Page<Cliente> buscarPaginado(@Param("buscar") String buscar, Pageable pageable);
+
+    @Query("SELECT CONCAT(COALESCE(c.nombres, ''), ' ', COALESCE(c.apellidos, ''), COALESCE(c.razonSocial, '')) FROM Cliente c WHERE c.idPersona = :idCliente")
+    String obtenerNombreAplanadoPorId(@Param("idCliente") Long idCliente);
 }
