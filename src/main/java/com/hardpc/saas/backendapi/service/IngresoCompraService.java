@@ -18,4 +18,6 @@ public interface IngresoCompraService {
     // Reportes BI
     List<GastoMensualDTO> obtenerReporteGastoMensual();
     List<GastoProveedorDTO> obtenerReporteGastoPorProveedor();
+
+    IngresoCompraResponseDTO anularIngresoCompra(Long idIngreso);
 }

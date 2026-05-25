@@ -1,9 +1,7 @@
 package com.hardpc.saas.backendapi.service.impl;
 
 import com.hardpc.saas.backendapi.dto.*;
-import com.hardpc.saas.backendapi.entity.DetalleIngreso;
-import com.hardpc.saas.backendapi.entity.IngresoCompra;
-import com.hardpc.saas.backendapi.entity.Producto;
+import com.hardpc.saas.backendapi.entity.*;
 import com.hardpc.saas.backendapi.enums.Condicion;
 import com.hardpc.saas.backendapi.enums.EstadoDisponibilidad;
 import com.hardpc.saas.backendapi.enums.EstadoIngreso;
@@ -24,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.hardpc.saas.backendapi.security.CustomUserDetails;
-import com.hardpc.saas.backendapi.entity.Usuario;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -41,6 +38,7 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
     private final LocalRepository localRepository;
     private final UsuarioRepository usuarioRepository;
     private final ProductoRepository productoRepository;
+    private final StockLocalRepository stockLocalRepository;
     private final ItemSerialRepository itemSerialRepository; // Solo para validar existencia de seriales
 
     // --- Servicios Orquestados ---
@@ -108,6 +106,100 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
         // a través de un Listener/Evento asíncrono en una fase posterior.
 
         return mapper.toResponseDTO(compraGuardada);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public IngresoCompraResponseDTO anularIngresoCompra(Long idIngreso) {
+
+        // 1. Identidad del Servidor (¿Quién está anulando la compra?)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Long idSupervisor = userDetails.getUsuario().getIdPersona();
+
+        // 2. Validación Inicial de Existencia y Estado
+        IngresoCompra ingreso = repository.findById(idIngreso)
+                .orElseThrow(() -> new EntityNotFoundException("Ingreso de compra no encontrado con ID: " + idIngreso));
+
+        // Asumiendo que manejas EstadoIngreso o similar. Si usas EstadoVenta adapta el Enum correspondiente.
+        if ("ANULADO".equals(ingreso.getEstadoIngreso().toString())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "ERR_COMPRA_YA_ANULADA", "Esta compra ya se encuentra anulada.");
+        }
+
+        Long idLocal = ingreso.getLocal().getIdLocal();
+
+        // =========================================================================================
+        // FASE 1: VALIDACIÓN FÍSICA Y CONTROL DE SALDOS NEGATIVOS (PRE-CHECK)
+        // =========================================================================================
+        for (DetalleIngreso detalle : ingreso.getDetalles()) {
+            Producto producto = detalle.getProducto();
+
+            if (Boolean.TRUE.equals(producto.getEsSerializado())) {
+                // Rastrear los seriales exactos que se crearon con esta línea de compra
+                List<ItemSerial> serialesComprados = itemSerialRepository.findByDetalleIngreso_IdDetalleIngreso(detalle.getIdDetalleIngreso());
+
+                for (ItemSerial item : serialesComprados) {
+                    // Si una sola de las laptops ya se vendió, se procesó por garantía o no está DISPONIBLE, bloqueamos todo
+                    if (item.getEstadoDisponibilidad() != EstadoDisponibilidad.DISPONIBLE) {
+                        throw new BusinessException(HttpStatus.CONFLICT, "ERR_REVERSO_COMPRA_INVALIDO",
+                                String.format("No se puede anular la compra. El producto serializado con serie '%s' ya cambió de estado (Estado actual: %s).",
+                                        item.getNumeroSerie(), item.getEstadoDisponibilidad()));
+                    }
+                }
+            } else {
+                // Validar si el local tiene stock suficiente para devolver estos productos a granel
+                boolean hayStockSuficiente = stockLocalRepository.hasStockSuficiente(producto.getIdProducto(), idLocal, detalle.getCantidad());
+                if (!hayStockSuficiente) {
+                    throw new BusinessException(HttpStatus.CONFLICT, "ERR_STOCK_INSUFICIENTE_REVERSO",
+                            String.format("No se puede anular la compra. El stock actual del producto '%s' en este local es insuficiente para realizar la devolución al proveedor.",
+                                    producto.getCodigoSku()));
+                }
+            }
+        }
+
+        // =========================================================================================
+        // FASE 2: EJECUCIÓN DEL REVERSO (Aprobado bajo condiciones físicas seguras)
+        // =========================================================================================
+
+        // A. Cambiar estado de la cabecera
+        ingreso.setEstadoIngreso(EstadoIngreso.ANULADO); // Adapta a tu Enum de estados de compra
+        IngresoCompra ingresoAnulado = repository.save(ingreso);
+
+        // B. Orquestar salida de inventario en el Ledger
+        for (DetalleIngreso detalle : ingresoAnulado.getDetalles()) {
+            Producto producto = detalle.getProducto();
+
+            // Plantilla base para el Ledger (Las anulaciones de compra restan del almacén origen)
+            MovimientoInventarioRequestDTO movReverso = new MovimientoInventarioRequestDTO();
+            movReverso.setTipoMovimiento(TipoMovimiento.SALIDA); // Reverso de entrada = Salida
+            movReverso.setIdUsuario(idSupervisor);
+            movReverso.setIdProducto(producto.getIdProducto());
+            movReverso.setIdLocalOrigen(idLocal); // Sale de la tienda donde ingresó originalmente
+            movReverso.setObservacion(String.format("REVERSO POR ANULACIÓN. Ref: Ingreso %s-%s",
+                    ingresoAnulado.getSerieComprobante(), ingresoAnulado.getNumeroComprobante()));
+
+            if (Boolean.TRUE.equals(producto.getEsSerializado())) {
+                List<ItemSerial> serialesComprados = itemSerialRepository.findByDetalleIngreso_IdDetalleIngreso(detalle.getIdDetalleIngreso());
+
+                for (ItemSerial item : serialesComprados) {
+                    // 1. Deshabilitar el equipo físico del mercado (Inmutabilidad)
+                    item.setEstadoDisponibilidad(EstadoDisponibilidad.DEVUELTO_PROVEEDOR);
+                    itemSerialRepository.save(item);
+
+                    // 2. Registrar salida individual en Ledger
+                    movReverso.setCantidad(1);
+                    movReverso.setIdItemSerial(item.getIdItemSerial());
+                    movimientoInventarioService.registrarMovimiento(movReverso);
+                }
+            } else {
+                // Registrar salida grupal a granel en Ledger (Baja el stock local automáticamente)
+                movReverso.setCantidad(detalle.getCantidad());
+                movReverso.setIdItemSerial(null);
+                movimientoInventarioService.registrarMovimiento(movReverso);
+            }
+        }
+
+        return mapper.toResponseDTO(ingresoAnulado);
     }
 
     // --- BLOQUE 2: REPORTES DE INTELIGENCIA DE NEGOCIO (BI) ---

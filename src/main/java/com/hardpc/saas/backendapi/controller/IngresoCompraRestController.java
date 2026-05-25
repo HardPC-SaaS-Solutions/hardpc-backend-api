@@ -66,4 +66,12 @@ public class IngresoCompraRestController {
     public ResponseEntity<List<GastoProveedorDTO>> obtenerReporteGastoPorProveedor() {
         return ResponseEntity.ok(service.obtenerReporteGastoPorProveedor());
     }
+
+    // --- ANULACIÓN DE COMPRA ---
+
+    @PutMapping("/{id}/anular")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR')")
+    public ResponseEntity<IngresoCompraResponseDTO> anularIngresoCompra(@PathVariable Long id) {
+        return ResponseEntity.ok(service.anularIngresoCompra(id));
+    }
 }
