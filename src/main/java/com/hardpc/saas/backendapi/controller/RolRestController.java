@@ -58,4 +58,9 @@ public class RolRestController {
         service.eliminarLogico(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/enum")
+    public ResponseEntity<List<String>> listarRolesEnum() {
+        return ResponseEntity.ok(service.listarRolesEnum());
+    }
 }

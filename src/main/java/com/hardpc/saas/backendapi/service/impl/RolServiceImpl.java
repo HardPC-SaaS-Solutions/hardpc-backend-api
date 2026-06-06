@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -88,5 +89,12 @@ public class RolServiceImpl implements RolService {
                 .orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con el ID: " + id));
         existente.setEstado(false);
         repository.save(existente);
+    }
+
+    @Override
+    public List<String> listarRolesEnum() {
+        return Arrays.stream(RolNombre.values())
+                .map(Enum::name)
+                .toList();
     }
 }

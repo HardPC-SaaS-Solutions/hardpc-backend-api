@@ -15,4 +15,5 @@ public interface RolService {
     RolDTO crear(RolDTO dto);
     RolDTO actualizar(Long id, RolDTO dto);
     void eliminarLogico(Long id);
+    List<String> listarRolesEnum();
 }

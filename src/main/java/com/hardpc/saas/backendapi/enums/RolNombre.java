@@ -4,5 +4,5 @@ public enum RolNombre {
     ROLE_ADMIN,
     ROLE_SUPERVISOR,
     ROLE_OPERATIVO,
-    ROLE_CAJERO
+    ROLE_CAJERO,
 }
