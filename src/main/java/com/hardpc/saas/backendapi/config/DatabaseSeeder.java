@@ -78,7 +78,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             // Credenciales y seguridad (Usuario)
             admin.setUsername("fteodorc");
             admin.setEmail("fteodorc@hardpc.com");
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setPassword(passwordEncoder.encode("Admin123"));
             admin.setEstado(true);
             admin.setRol(rolAdmin);
 
