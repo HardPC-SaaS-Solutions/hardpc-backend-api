@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface UsuarioService {
-    Page<UsuarioResponseDTO> listarPaginado(String buscar, Pageable pageable);
+    Page<UsuarioResponseDTO> listarPaginado(String buscar, Long idRol, Pageable pageable);
     UsuarioResponseDTO buscarPorId(Long id);
     UsuarioResponseDTO crear(UsuarioRequestDTO dto);
     UsuarioResponseDTO actualizar(Long id, UsuarioRequestDTO dto);

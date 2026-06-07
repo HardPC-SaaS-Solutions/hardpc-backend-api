@@ -29,10 +29,14 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     // 4. Búsqueda Paginada Dinámica usando JPQL limpio ---
     @Query("SELECT u FROM Usuario u WHERE " +
+            "(:idRol IS NULL OR u.rol.idRol = :idRol) AND " + // Filtro exacto por dropdown
+            "(:buscar IS NULL OR :buscar = '' OR " +       // Filtro flexible por texto
             "LOWER(u.username) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
             "LOWER(u.nombres) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
-            "LOWER(u.apellidos) LIKE LOWER(CONCAT('%', :buscar, '%'))")
-    Page<Usuario> buscarPaginado(@Param("buscar") String buscar, Pageable pageable);
+            "LOWER(u.apellidos) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
+            "u.numeroDocumento LIKE CONCAT('%', :buscar, '%') OR " +
+            "u.telefono LIKE CONCAT('%', :buscar, '%'))")
+    Page<Usuario> buscarPaginadoAvanzado(@Param("buscar") String buscar, @Param("idRol") Long idRol, Pageable pageable);
 
     Optional<Usuario> findByUsername(String username);
 }

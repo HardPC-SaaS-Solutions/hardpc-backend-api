@@ -26,10 +26,9 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UsuarioResponseDTO> listarPaginado(String buscar, Pageable pageable) {
-        Page<Usuario> pagina = (buscar != null && !buscar.trim().isEmpty())
-                ? repository.buscarPaginado(buscar, pageable)
-                : repository.findAll(pageable);
+    public Page<UsuarioResponseDTO> listarPaginado(String buscar, Long idRol, Pageable pageable) {
+        // Delegamos toda la lógica de filtrado dinámico al repositorio
+        Page<Usuario> pagina = repository.buscarPaginadoAvanzado(buscar, idRol, pageable);
         return pagina.map(mapper::toResponseDTO);
     }
 

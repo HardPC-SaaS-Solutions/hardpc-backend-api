@@ -24,8 +24,10 @@ public class UsuarioRestController {
     @GetMapping
     public ResponseEntity<Page<UsuarioResponseDTO>> listarPaginado(
             @RequestParam(required = false, defaultValue = "") String buscar,
+            @RequestParam(required = false) Long idRol,
             @PageableDefault(size = 10, sort = "username") Pageable pageable) {
-        return ResponseEntity.ok(service.listarPaginado(buscar, pageable));
+        System.out.println("ID ROL RECIBIDO: " + idRol);
+        return ResponseEntity.ok(service.listarPaginado(buscar, idRol, pageable));
     }
 
     @GetMapping("/{id}")
