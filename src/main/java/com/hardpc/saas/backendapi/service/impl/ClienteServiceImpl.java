@@ -25,10 +25,8 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ClienteResponseDTO> listarPaginado(String buscar, Pageable pageable) {
-        Page<Cliente> pagina = (buscar != null && !buscar.trim().isEmpty())
-                ? repository.buscarPaginado(buscar, pageable)
-                : repository.findAll(pageable);
+    public Page<ClienteResponseDTO> listarPaginado(String buscar, TipoCliente tipoCliente, Pageable pageable) {
+        Page<Cliente> pagina = repository.buscarPaginadoAvanzado(buscar, tipoCliente, pageable);
         return pagina.map(mapper::toResponseDTO);
     }
 

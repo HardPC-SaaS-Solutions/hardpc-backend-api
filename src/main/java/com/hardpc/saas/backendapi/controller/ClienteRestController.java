@@ -2,6 +2,7 @@ package com.hardpc.saas.backendapi.controller;
 
 import com.hardpc.saas.backendapi.dto.ClienteRequestDTO;
 import com.hardpc.saas.backendapi.dto.ClienteResponseDTO;
+import com.hardpc.saas.backendapi.enums.TipoCliente;
 import com.hardpc.saas.backendapi.service.ClienteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +20,14 @@ import org.springframework.web.bind.annotation.*;
 public class ClienteRestController {
 
     private final ClienteService service;
+
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'OPERATIVO', 'CAJERO')")
     @GetMapping
     public ResponseEntity<Page<ClienteResponseDTO>> listarPaginado(
             @RequestParam(required = false, defaultValue = "") String buscar,
+            @RequestParam(required = false) TipoCliente tipoCliente,
             @PageableDefault(size = 10, sort = "numeroDocumento") Pageable pageable) {
-        return ResponseEntity.ok(service.listarPaginado(buscar, pageable));
+        return ResponseEntity.ok(service.listarPaginado(buscar, tipoCliente, pageable));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'OPERATIVO', 'CAJERO')")

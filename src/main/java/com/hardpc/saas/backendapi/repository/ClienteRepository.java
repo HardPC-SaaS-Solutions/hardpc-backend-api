@@ -1,6 +1,7 @@
 package com.hardpc.saas.backendapi.repository;
 
 import com.hardpc.saas.backendapi.entity.Cliente;
+import com.hardpc.saas.backendapi.enums.TipoCliente;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,11 +22,13 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
     // --- Búsqueda Paginada Flexible ---
     @Query("SELECT c FROM Cliente c WHERE " +
+            "(:tipo IS NULL OR c.tipoCliente = :tipo) AND " +
+            "(:buscar IS NULL OR :buscar = '' OR " +
             "LOWER(c.numeroDocumento) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
             "LOWER(COALESCE(c.nombres, '')) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
             "LOWER(COALESCE(c.apellidos, '')) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
-            "LOWER(COALESCE(c.razonSocial, '')) LIKE LOWER(CONCAT('%', :buscar, '%'))")
-    Page<Cliente> buscarPaginado(@Param("buscar") String buscar, Pageable pageable);
+            "LOWER(COALESCE(c.razonSocial, '')) LIKE LOWER(CONCAT('%', :buscar, '%')))")
+    Page<Cliente> buscarPaginadoAvanzado(@Param("buscar") String buscar, @Param("tipo") TipoCliente tipo, Pageable pageable);
 
     @Query("SELECT CONCAT(COALESCE(c.nombres, ''), ' ', COALESCE(c.apellidos, ''), COALESCE(c.razonSocial, '')) FROM Cliente c WHERE c.idPersona = :idCliente")
     String obtenerNombreAplanadoPorId(@Param("idCliente") Long idCliente);
