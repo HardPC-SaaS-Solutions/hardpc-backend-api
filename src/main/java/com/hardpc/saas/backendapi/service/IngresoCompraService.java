@@ -1,12 +1,23 @@
 package com.hardpc.saas.backendapi.service;
 
-import com.hardpc.saas.backendapi.entity.IngresoCompra;
+import com.hardpc.saas.backendapi.dto.GastoMensualDTO;
+import com.hardpc.saas.backendapi.dto.GastoProveedorDTO;
+import com.hardpc.saas.backendapi.dto.IngresoCompraRequestDTO;
+import com.hardpc.saas.backendapi.dto.IngresoCompraResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface IngresoCompraService {
-    List<IngresoCompra> listarTodos();
-    IngresoCompra buscarPorId(Long id);
-    IngresoCompra crear(IngresoCompra ingresoCompra);
-    IngresoCompra actualizar(Long id, IngresoCompra ingresoCompra);
-    void eliminar(Long id);
+    IngresoCompraResponseDTO registrarCompra(IngresoCompraRequestDTO dto);
+    IngresoCompraResponseDTO buscarPorId(Long id);
+    Page<IngresoCompraResponseDTO> listarPaginadoAvanzado(LocalDateTime inicio, LocalDateTime fin, Long idProveedor, Long idLocal, Pageable pageable);
+
+    // Reportes BI
+    List<GastoMensualDTO> obtenerReporteGastoMensual();
+    List<GastoProveedorDTO> obtenerReporteGastoPorProveedor();
+
+    IngresoCompraResponseDTO anularIngresoCompra(Long idIngreso);
 }

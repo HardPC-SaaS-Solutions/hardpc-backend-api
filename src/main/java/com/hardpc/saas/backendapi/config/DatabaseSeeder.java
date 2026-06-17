@@ -1,9 +1,12 @@
 package com.hardpc.saas.backendapi.config;
 
+import com.hardpc.saas.backendapi.entity.Cliente;
 import com.hardpc.saas.backendapi.entity.Rol;
 import com.hardpc.saas.backendapi.entity.TipoDocumento;
 import com.hardpc.saas.backendapi.entity.Usuario;
 import com.hardpc.saas.backendapi.enums.RolNombre;
+import com.hardpc.saas.backendapi.enums.TipoCliente;
+import com.hardpc.saas.backendapi.repository.ClienteRepository;
 import com.hardpc.saas.backendapi.repository.RolRepository;
 import com.hardpc.saas.backendapi.repository.TipoDocumentoRepository;
 import com.hardpc.saas.backendapi.repository.UsuarioRepository;
@@ -20,6 +23,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final TipoDocumentoRepository tipoDocumentoRepository;
+    private final ClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -82,6 +86,27 @@ public class DatabaseSeeder implements CommandLineRunner {
             System.out.println("✅ Administrador de HardPC creado con éxito.");
         } else {
             System.out.println("👍 Catálogos listos. El usuario maestro ya existe.");
+        }
+
+        // 4. Creación del Cliente Genérico (Público en General) para Ventas Rápidas
+        // El DNI "00000000" es el estándar tributario para ventas a clientes anónimos
+        if (!clienteRepository.existsByNumeroDocumento("00000000")) {
+            Cliente clienteGenerico = new Cliente();
+
+            // Llenamos los datos como si fuera una Persona Natural
+            clienteGenerico.setNombres("Público en General");
+            clienteGenerico.setApellidos("");
+            clienteGenerico.setTipoDocumento(dni);
+            clienteGenerico.setNumeroDocumento("00000000");
+            clienteGenerico.setEmail("anonimo@hardpc.com");
+            clienteGenerico.setTelefono("000000000");
+            clienteGenerico.setTipoCliente(TipoCliente.PERSONA_NATURAL);
+            clienteGenerico.setEstado(true);
+
+            clienteRepository.save(clienteGenerico);
+            System.out.println("✅ Cliente genérico (Público en General) creado con éxito.");
+        } else {
+            System.out.println("👍 Catálogos listos. El cliente genérico ya existe.");
         }
     }
 }

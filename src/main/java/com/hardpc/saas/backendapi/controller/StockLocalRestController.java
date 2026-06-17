@@ -1,6 +1,7 @@
 package com.hardpc.saas.backendapi.controller;
 
 import com.hardpc.saas.backendapi.dto.InversionStockDTO;
+import com.hardpc.saas.backendapi.dto.StockLocalDetalleDTO;
 import com.hardpc.saas.backendapi.dto.StockLocalRequestDTO;
 import com.hardpc.saas.backendapi.dto.StockLocalResponseDTO;
 import com.hardpc.saas.backendapi.service.StockLocalService;
@@ -21,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StockLocalRestController {
 
+    private final StockLocalService stockLocalService;
     private final StockLocalService service;
 
     // --- ACCESO DE LECTURA / BÚSQUEDAS (Operativos) ---
@@ -78,4 +80,21 @@ public class StockLocalRestController {
 
     // NOTA DE ARQUITECTO: Omitimos deliberadamente el endpoint @DeleteMapping.
     // Un registro de stock nunca se borra, su cantidad evoluciona (o decae a 0).
+
+    @GetMapping("/detalle-local/{idLocal}")
+    public ResponseEntity<List<StockLocalDetalleDTO>> listarDetallePorLocal(
+            @PathVariable Long idLocal,
+            @RequestParam(defaultValue = "") String buscar
+    ) {
+
+        return ResponseEntity.ok(
+                stockLocalService.listarDetallePorLocal(
+                        idLocal,
+                        buscar
+                )
+        );
+    }
+
+
 }
+

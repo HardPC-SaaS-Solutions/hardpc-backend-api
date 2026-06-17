@@ -18,7 +18,7 @@ public class MovimientoInventarioRequestDTO {
     @NotNull(message = "El producto es obligatorio")
     private Long idProducto;
 
-    @NotNull(message = "El usuario responsable es obligatorio")
+    //@NotNull(message = "El usuario responsable es obligatorio")
     private Long idUsuario;
 
     // --- Campos Opcionales (Validados dinámicamente en el Service) ---

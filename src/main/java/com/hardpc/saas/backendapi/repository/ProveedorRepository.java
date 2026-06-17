@@ -29,4 +29,8 @@ public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
             "LOWER(p.razonSocial) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
             "LOWER(COALESCE(p.nombreComercial, '')) LIKE LOWER(CONCAT('%', :buscar, '%'))")
     Page<Proveedor> buscarPaginado(@Param("buscar") String buscar, Pageable pageable);
+
+    // --- Proyección Optimizada para Orquestadores ---
+    @Query("SELECT p.razonSocial FROM Proveedor p WHERE p.idProveedor = :idProveedor")
+    String obtenerRazonSocialPorId(@Param("idProveedor") Long idProveedor);
 }

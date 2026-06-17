@@ -59,8 +59,8 @@ public class MovimientoInventarioRestController {
     @GetMapping("/auditoria")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'OPERATIVO', 'CAJERO')")
     public ResponseEntity<Page<MovimientoInventarioResponseDTO>> filtrarHistorial(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
             @RequestParam(required = false) TipoMovimiento tipo,
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(service.filtrarHistorial(fechaInicio, fechaFin, tipo, pageable));

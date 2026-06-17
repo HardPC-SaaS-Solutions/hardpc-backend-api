@@ -22,6 +22,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody AuthLoginRequestDTO request) {
         // Delegamos toda la lógica al servicio y devolvemos un HTTP 200 OK con el DTO
+        // Devuelve una respuesta con el token
         return ResponseEntity.ok(authService.login(request));
     }
 }

@@ -37,4 +37,29 @@ public interface ItemSerialRepository extends JpaRepository<ItemSerial, Long> {
             "(LOWER(i.numeroSerie) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
             "LOWER(i.producto.codigoSku) LIKE LOWER(CONCAT('%', :buscar, '%')))")
     Page<ItemSerial> buscarPaginadoAvanzado(@Param("buscar") String buscar, @Param("idLocal") Long idLocal, Pageable pageable);
+
+    List<ItemSerial> findByDetalleIngreso_IdDetalleIngreso(Long idDetalleIngreso);
+
+    @Query("""
+        SELECT i FROM ItemSerial i 
+        WHERE i.producto.idProducto = :idProducto 
+        AND i.local.idLocal = :idLocal 
+        AND i.estadoDisponibilidad = 'DISPONIBLE'
+        """)
+    List<ItemSerial> findSeriesDisponibles(
+            @Param("idProducto") Long idProducto,
+            @Param("idLocal") Long idLocal
+    );
+
+    @Query("SELECT new com.hardpc.saas.backendapi.dto.SerialDisponibleDTO(i.idItemSerial, i.numeroSerie, i.producto.idProducto) " +
+            "FROM ItemSerial i " +
+            "WHERE i.local.idLocal = :idLocal AND i.estadoDisponibilidad = :estado")
+    List<com.hardpc.saas.backendapi.dto.SerialDisponibleDTO> findSerialesDtoByLocalAndEstado(
+            @Param("idLocal") Long idLocal,
+            @Param("estado") com.hardpc.saas.backendapi.enums.EstadoDisponibilidad estado
+    );
+
+    List<ItemSerial> findByLocal_IdLocalAndEstadoDisponibilidad(Long idLocal, com.hardpc.saas.backendapi.enums.EstadoDisponibilidad estadoDisponibilidad);
+
 }
+

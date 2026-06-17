@@ -28,11 +28,11 @@ public class ClienteRequestDTO {
     @Size(max = 150, message = "La razón social no puede exceder los 150 caracteres")
     private String razonSocial;
 
-    @NotBlank(message = "El teléfono es obligatorio")
+    //@NotBlank(message = "El teléfono es obligatorio")
     @Size(max = 20, message = "El teléfono no puede exceder los 20 caracteres")
     private String telefono;
 
-    @NotBlank(message = "El email es obligatorio")
+    //@NotBlank(message = "El email es obligatorio")
     @Email(message = "El formato del email no es válido")
     @Size(max = 100, message = "El email no puede exceder los 100 caracteres")
     private String email;

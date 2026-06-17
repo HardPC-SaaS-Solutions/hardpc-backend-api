@@ -23,7 +23,8 @@ public interface MovimientoInventarioRepository extends JpaRepository<Movimiento
 
     // --- Filtros Dinámicos de Auditoría ---
     @Query("SELECT m FROM MovimientoInventario m WHERE " +
-            "(m.fechaHora BETWEEN :fechaInicio AND :fechaFin) AND " +
+            "(:fechaInicio IS NULL OR m.fechaHora >= :fechaInicio) AND " +
+            "(:fechaFin IS NULL OR m.fechaHora <= :fechaFin) AND " +
             "(:tipoMovimiento IS NULL OR m.tipoMovimiento = :tipoMovimiento) " +
             "ORDER BY m.fechaHora DESC")
     Page<MovimientoInventario> buscarPorFiltrosAuditoria(
