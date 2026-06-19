@@ -15,14 +15,20 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     boolean existsByCodigoSku(String codigoSku);
     boolean existsByCodigoSkuAndIdProductoNot(String codigoSku, Long idProducto);
 
-    // --- Búsqueda Paginada Flexible (Optimizada para DataTables y Filtros Dinámicos) ---
+    // --- Búsqueda Paginada Flexible (Optimizada para DataTables y Filtros Dinámicos Cruzados) ---
     @Query("SELECT p FROM Producto p WHERE " +
             "(:esSerializado IS NULL OR p.esSerializado = :esSerializado) AND " +
+            "(:idCategoria IS NULL OR p.categoria.idCategoria = :idCategoria) AND " +
+            "(:idMarca IS NULL OR p.marca.idMarca = :idMarca) AND " +
+            "(:idUnidadMedida IS NULL OR p.unidadMedida.idUnidadMedida = :idUnidadMedida) AND " +
             "(LOWER(p.codigoSku) LIKE LOWER(CONCAT('%', :buscar, '%')) OR " +
             "LOWER(p.descripcion) LIKE LOWER(CONCAT('%', :buscar, '%')))")
-    Page<Producto> buscarPaginado(
+    Page<Producto> buscarPaginadoAvanzado(
             @Param("buscar") String buscar,
             @Param("esSerializado") Boolean esSerializado,
+            @Param("idCategoria") Long idCategoria,
+            @Param("idMarca") Long idMarca,
+            @Param("idUnidadMedida") Long idUnidadMedida,
             Pageable pageable
     );
 

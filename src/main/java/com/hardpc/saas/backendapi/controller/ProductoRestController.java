@@ -20,15 +20,18 @@ public class ProductoRestController {
 
     private final ProductoService service;
 
-    // --- ACCESO DE LECTURA (Toda la operación) ---
+    // --- ACCESO DE LECTURA (Toda la operación con Filtros Avanzados) ---
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'OPERATIVO', 'CAJERO')")
     public ResponseEntity<Page<ProductoResponseDTO>> listarPaginado(
             @RequestParam(required = false, defaultValue = "") String buscar,
             @RequestParam(required = false) Boolean esSerializado,
+            @RequestParam(required = false) Long idCategoria,
+            @RequestParam(required = false) Long idMarca,
+            @RequestParam(required = false) Long idUnidadMedida,
             @PageableDefault(size = 10) Pageable pageable) {
 
-        return ResponseEntity.ok(service.listarPaginado(buscar, esSerializado, pageable));
+        return ResponseEntity.ok(service.listarPaginado(buscar, esSerializado, idCategoria, idMarca, idUnidadMedida, pageable));
     }
 
     // --- ACCESO DE LECTURA: ENDPOINTS PERSONALIZADOS (POS) ---

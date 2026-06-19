@@ -32,9 +32,9 @@ public class ProductoServiceImpl implements ProductoService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductoResponseDTO> listarPaginado(String buscar, Boolean esSerializado, Pageable pageable) {
+    public Page<ProductoResponseDTO> listarPaginado(String buscar, Boolean esSerializado, Long idCategoria, Long idMarca, Long idUnidadMedida, Pageable pageable) {
         String termino = (buscar == null) ? "" : buscar.trim();
-        return repository.buscarPaginado(termino, esSerializado, pageable)
+        return repository.buscarPaginadoAvanzado(termino, esSerializado, idCategoria, idMarca, idUnidadMedida, pageable)
                 .map(mapper::toResponseDTO);
     }
 
