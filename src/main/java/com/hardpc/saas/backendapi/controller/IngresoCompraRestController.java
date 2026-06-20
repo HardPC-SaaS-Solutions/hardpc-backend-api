@@ -4,6 +4,7 @@ import com.hardpc.saas.backendapi.dto.GastoMensualDTO;
 import com.hardpc.saas.backendapi.dto.GastoProveedorDTO;
 import com.hardpc.saas.backendapi.dto.IngresoCompraRequestDTO;
 import com.hardpc.saas.backendapi.dto.IngresoCompraResponseDTO;
+import com.hardpc.saas.backendapi.enums.EstadoIngreso;
 import com.hardpc.saas.backendapi.service.IngresoCompraService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -49,8 +50,10 @@ public class IngresoCompraRestController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
             @RequestParam(required = false) Long idProveedor,
             @RequestParam(required = false) Long idLocal,
+            @RequestParam(required = false) EstadoIngreso estado,
+            @RequestParam(required = false) String comprobante,
             @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(service.listarPaginadoAvanzado(fechaInicio, fechaFin, idProveedor, idLocal, pageable));
+        return ResponseEntity.ok(service.listarPaginadoAvanzado(fechaInicio, fechaFin, idProveedor, idLocal, estado, comprobante, pageable));
     }
 
     // --- REPORTES FINANCIEROS Y DE AUDITORÍA DE COMPRAS (BI) ---

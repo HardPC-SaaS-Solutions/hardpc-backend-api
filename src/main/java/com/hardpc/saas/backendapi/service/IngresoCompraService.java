@@ -4,6 +4,7 @@ import com.hardpc.saas.backendapi.dto.GastoMensualDTO;
 import com.hardpc.saas.backendapi.dto.GastoProveedorDTO;
 import com.hardpc.saas.backendapi.dto.IngresoCompraRequestDTO;
 import com.hardpc.saas.backendapi.dto.IngresoCompraResponseDTO;
+import com.hardpc.saas.backendapi.enums.EstadoIngreso;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,8 +14,7 @@ import java.util.List;
 public interface IngresoCompraService {
     IngresoCompraResponseDTO registrarCompra(IngresoCompraRequestDTO dto);
     IngresoCompraResponseDTO buscarPorId(Long id);
-    Page<IngresoCompraResponseDTO> listarPaginadoAvanzado(LocalDateTime inicio, LocalDateTime fin, Long idProveedor, Long idLocal, Pageable pageable);
-
+    Page<IngresoCompraResponseDTO> listarPaginadoAvanzado(LocalDateTime inicio, LocalDateTime fin, Long idProveedor, Long idLocal, EstadoIngreso estado, String comprobante, Pageable pageable);
     // Reportes BI
     List<GastoMensualDTO> obtenerReporteGastoMensual();
     List<GastoProveedorDTO> obtenerReporteGastoPorProveedor();

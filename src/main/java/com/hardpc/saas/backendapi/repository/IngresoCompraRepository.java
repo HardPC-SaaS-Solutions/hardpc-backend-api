@@ -3,6 +3,7 @@ package com.hardpc.saas.backendapi.repository;
 import com.hardpc.saas.backendapi.dto.GastoMensualDTO;
 import com.hardpc.saas.backendapi.dto.GastoProveedorDTO;
 import com.hardpc.saas.backendapi.entity.IngresoCompra;
+import com.hardpc.saas.backendapi.enums.EstadoIngreso;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,13 +26,17 @@ public interface IngresoCompraRepository extends JpaRepository<IngresoCompra, Lo
             "(:fechaInicio IS NULL OR i.fechaIngreso >= :fechaInicio) AND " +
             "(:fechaFin IS NULL OR i.fechaIngreso <= :fechaFin) AND " +
             "(:idProveedor IS NULL OR i.proveedor.idProveedor = :idProveedor) AND " +
-            "(:idLocal IS NULL OR i.local.idLocal = :idLocal) " +
+            "(:idLocal IS NULL OR i.local.idLocal = :idLocal) AND " +
+            "(:estado IS NULL OR i.estadoIngreso = :estado) AND " +
+            "(:comprobante IS NULL OR LOWER(i.serieComprobante) LIKE LOWER(CONCAT('%', :comprobante, '%')) OR LOWER(i.numeroComprobante) LIKE LOWER(CONCAT('%', :comprobante, '%'))) " +
             "ORDER BY i.fechaIngreso DESC")
     Page<IngresoCompra> buscarPaginadoAvanzado(
             @Param("fechaInicio") LocalDateTime fechaInicio,
             @Param("fechaFin") LocalDateTime fechaFin,
             @Param("idProveedor") Long idProveedor,
             @Param("idLocal") Long idLocal,
+            @Param("estado") EstadoIngreso estado,
+            @Param("comprobante") String comprobante,
             Pageable pageable);
 
     // --- REPORTES FINANCIEROS Y BI ---

@@ -57,10 +57,8 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<IngresoCompraResponseDTO> listarPaginadoAvanzado(LocalDateTime inicio, LocalDateTime fin, Long idProveedor, Long idLocal, Pageable pageable) {
-        // --- FIX: Barrera de nulos eliminada.
-        // Delegamos la flexibilidad al JPQL (>= y <=) del repositorio.
-        return repository.buscarPaginadoAvanzado(inicio, fin, idProveedor, idLocal, pageable)
+    public Page<IngresoCompraResponseDTO> listarPaginadoAvanzado(LocalDateTime inicio, LocalDateTime fin, Long idProveedor, Long idLocal, EstadoIngreso estado, String comprobante, Pageable pageable) {
+        return repository.buscarPaginadoAvanzado(inicio, fin, idProveedor, idLocal, estado, comprobante, pageable)
                 .map(mapper::toResponseDTO);
     }
 
