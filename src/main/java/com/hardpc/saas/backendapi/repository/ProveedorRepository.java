@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
 
@@ -22,6 +24,9 @@ public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
     boolean existsByEmailIgnoreCaseAndIdProveedorNot(String email, Long idProveedor);
     boolean existsByRazonSocialIgnoreCaseAndIdProveedorNot(String razonSocial, Long idProveedor);
     boolean existsByNombreComercialIgnoreCaseAndIdProveedorNot(String nombreComercial, Long idProveedor);
+
+    // --- Listar en combo para filtros desplegables ---
+    List<Proveedor> findByEstadoTrueOrderByRazonSocialAsc();
 
     // --- Búsqueda Paginada Dinámica ---
     @Query("SELECT p FROM Proveedor p WHERE " +

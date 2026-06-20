@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ProveedorServiceImpl implements ProveedorService {
@@ -29,6 +31,15 @@ public class ProveedorServiceImpl implements ProveedorService {
                 ? repository.buscarPaginado(buscar, pageable)
                 : repository.findAll(pageable);
         return pagina.map(mapper::toResponseDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProveedorResponseDTO> listarActivosParaCombo() {
+        return repository.findByEstadoTrueOrderByRazonSocialAsc()
+                .stream()
+                .map(mapper::toResponseDTO)
+                .toList();
     }
 
     @Override

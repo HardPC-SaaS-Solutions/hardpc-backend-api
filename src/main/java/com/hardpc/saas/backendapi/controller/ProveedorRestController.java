@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/proveedores")
 @RequiredArgsConstructor
@@ -27,6 +29,12 @@ public class ProveedorRestController {
             @RequestParam(required = false, defaultValue = "") String buscar,
             @PageableDefault(size = 10, sort = "razonSocial") Pageable pageable) {
         return ResponseEntity.ok(service.listarPaginado(buscar, pageable));
+    }
+
+    @GetMapping("/combo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'OPERATIVO', 'CAJERO')")
+    public ResponseEntity<List<ProveedorResponseDTO>> listarParaCombo() {
+        return ResponseEntity.ok(service.listarActivosParaCombo());
     }
 
     @GetMapping("/{id}")
