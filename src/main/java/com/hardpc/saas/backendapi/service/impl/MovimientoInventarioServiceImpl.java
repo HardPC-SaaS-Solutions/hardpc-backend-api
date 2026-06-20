@@ -145,6 +145,14 @@ public class MovimientoInventarioServiceImpl implements MovimientoInventarioServ
         return mapper.toResponseDTO(guardado);
     }
 
+    @Override
+    @Transactional
+    public MovimientoInventarioResponseDTO registrarTraslado(MovimientoInventarioRequestDTO dto) {
+        dto.setTipoMovimiento(TipoMovimiento.TRASLADO);
+
+        return this.registrarMovimiento(dto);
+    }
+
     // --- MÉTODOS DE VALIDACIÓN PRIVADOS ---
 
     /**

@@ -12,6 +12,7 @@ public interface MovimientoInventarioService {
     // Inmutabilidad estricta: Solo Leer y Crear
     MovimientoInventarioResponseDTO buscarPorId(Long id);
     MovimientoInventarioResponseDTO registrarMovimiento(MovimientoInventarioRequestDTO dto);
+    MovimientoInventarioResponseDTO registrarTraslado(MovimientoInventarioRequestDTO dto);
 
     // Históricos y Auditoría
     Page<MovimientoInventarioResponseDTO> listarTodos(Pageable pageable);

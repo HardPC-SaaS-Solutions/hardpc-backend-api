@@ -74,6 +74,12 @@ public class MovimientoInventarioRestController {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.registrarMovimiento(dto));
     }
 
+    @PostMapping("/traslado")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'OPERATIVO')")
+    public ResponseEntity<MovimientoInventarioResponseDTO> registrarTraslado(@Valid @RequestBody MovimientoInventarioRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.registrarTraslado(dto));
+    }
+
     // ARQUITECTURA: SIN @PutMapping, SIN @DeleteMapping, SIN @PatchMapping.
     // Un registro contable/logístico jamás se borra ni edita.
 }
