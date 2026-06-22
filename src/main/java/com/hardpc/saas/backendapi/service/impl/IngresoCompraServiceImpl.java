@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
     private final UsuarioRepository usuarioRepository;
     private final ProductoRepository productoRepository;
     private final StockLocalRepository stockLocalRepository;
-    private final ItemSerialRepository itemSerialRepository; // Solo para validar existencia de seriales
+    private final ItemSerialRepository itemSerialRepository; // Inyectado para validaciones e inyección de series
 
     // --- Servicios Orquestados ---
     private final ItemSerialService itemSerialService;
@@ -50,16 +51,24 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
     @Override
     @Transactional(readOnly = true)
     public IngresoCompraResponseDTO buscarPorId(Long id) {
-        return repository.findById(id)
+        IngresoCompraResponseDTO response = repository.findById(id)
                 .map(mapper::toResponseDTO)
                 .orElseThrow(() -> new EntityNotFoundException("Ingreso de compra no encontrado con ID: " + id));
+
+        // ✨ ENRIQUECIMIENTO ATÓMICO: Carga las series para la vista de detalle única
+        this.enriquecerResponseDTOSeriales(response);
+        return response;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<IngresoCompraResponseDTO> listarPaginadoAvanzado(LocalDateTime inicio, LocalDateTime fin, Long idProveedor, Long idLocal, EstadoIngreso estado, String comprobante, Pageable pageable) {
-        return repository.buscarPaginadoAvanzado(inicio, fin, idProveedor, idLocal, estado, comprobante, pageable)
+        Page<IngresoCompraResponseDTO> pagina = repository.buscarPaginadoAvanzado(inicio, fin, idProveedor, idLocal, estado, comprobante, pageable)
                 .map(mapper::toResponseDTO);
+
+        // ✨ ENRIQUECIMIENTO EN LOTE: Mapea de forma segura las series para cada fila del historial
+        pagina.forEach(this::enriquecerResponseDTOSeriales);
+        return pagina;
     }
 
     // --- BLOQUE 1: EL ORQUESTADOR TRANSACCIONAL CORE ---
@@ -99,11 +108,10 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
         // 6. ORQUESTACIÓN A SERVICIOS EXTERNOS (Efectos Colaterales Físicos)
         orquestarEfectosColaterales(dto, compraGuardada, usuarioLogueado.getIdPersona());
 
-        // NOTA ARQUITECTÓNICA: La actualización del 'StockLocal' no se hace aquí directamente para evitar acoplamiento.
-        // La tabla 'MovimientoInventario' y la inserción en 'ItemSerial' dispararán el stock real
-        // a través de un Listener/Evento asíncrono en una fase posterior.
-
-        return mapper.toResponseDTO(compraGuardada);
+        // Mapeamos a respuesta final y enriquecemos las series recién generadas para el frontend
+        IngresoCompraResponseDTO response = mapper.toResponseDTO(compraGuardada);
+        this.enriquecerResponseDTOSeriales(response);
+        return response;
     }
 
     @Override
@@ -119,7 +127,6 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
         IngresoCompra ingreso = repository.findById(idIngreso)
                 .orElseThrow(() -> new EntityNotFoundException("Ingreso de compra no encontrado con ID: " + idIngreso));
 
-        // Asumiendo que manejas EstadoIngreso o similar. Si usas EstadoVenta adapta el Enum correspondiente.
         if ("ANULADO".equals(ingreso.getEstadoIngreso().toString())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "ERR_COMPRA_YA_ANULADA", "Esta compra ya se encuentra anulada.");
         }
@@ -133,11 +140,9 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
             Producto producto = detalle.getProducto();
 
             if (Boolean.TRUE.equals(producto.getEsSerializado())) {
-                // Rastrear los seriales exactos que se crearon con esta línea de compra
                 List<ItemSerial> serialesComprados = itemSerialRepository.findByDetalleIngreso_IdDetalleIngreso(detalle.getIdDetalleIngreso());
 
                 for (ItemSerial item : serialesComprados) {
-                    // Si una sola de las laptops ya se vendió, se procesó por garantía o no está DISPONIBLE, bloqueamos todo
                     if (item.getEstadoDisponibilidad() != EstadoDisponibilidad.DISPONIBLE) {
                         throw new BusinessException(HttpStatus.CONFLICT, "ERR_REVERSO_COMPRA_INVALIDO",
                                 String.format("No se puede anular la compra. El producto serializado con serie '%s' ya cambió de estado (Estado actual: %s).",
@@ -145,7 +150,6 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
                     }
                 }
             } else {
-                // Validar si el local tiene stock suficiente para devolver estos productos a granel
                 boolean hayStockSuficiente = stockLocalRepository.hasStockSuficiente(producto.getIdProducto(), idLocal, detalle.getCantidad());
                 if (!hayStockSuficiente) {
                     throw new BusinessException(HttpStatus.CONFLICT, "ERR_STOCK_INSUFICIENTE_REVERSO",
@@ -159,20 +163,17 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
         // FASE 2: EJECUCIÓN DEL REVERSO (Aprobado bajo condiciones físicas seguras)
         // =========================================================================================
 
-        // A. Cambiar estado de la cabecera
-        ingreso.setEstadoIngreso(EstadoIngreso.ANULADO); // Adapta a tu Enum de estados de compra
+        ingreso.setEstadoIngreso(EstadoIngreso.ANULADO);
         IngresoCompra ingresoAnulado = repository.save(ingreso);
 
-        // B. Orquestar salida de inventario en el Ledger
         for (DetalleIngreso detalle : ingresoAnulado.getDetalles()) {
             Producto producto = detalle.getProducto();
 
-            // Plantilla base para el Ledger (Las anulaciones de compra restan del almacén origen)
             MovimientoInventarioRequestDTO movReverso = new MovimientoInventarioRequestDTO();
-            movReverso.setTipoMovimiento(TipoMovimiento.SALIDA); // Reverso de entrada = Salida
+            movReverso.setTipoMovimiento(TipoMovimiento.SALIDA);
             movReverso.setIdUsuario(idSupervisor);
             movReverso.setIdProducto(producto.getIdProducto());
-            movReverso.setIdLocalOrigen(idLocal); // Sale de la tienda donde ingresó originalmente
+            movReverso.setIdLocalOrigen(idLocal);
             movReverso.setObservacion(String.format("REVERSO POR ANULACIÓN. Ref: Ingreso %s-%s",
                     ingresoAnulado.getSerieComprobante(), ingresoAnulado.getNumeroComprobante()));
 
@@ -180,24 +181,23 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
                 List<ItemSerial> serialesComprados = itemSerialRepository.findByDetalleIngreso_IdDetalleIngreso(detalle.getIdDetalleIngreso());
 
                 for (ItemSerial item : serialesComprados) {
-                    // 1. Deshabilitar el equipo físico del mercado (Inmutabilidad)
                     item.setEstadoDisponibilidad(EstadoDisponibilidad.DEVUELTO_PROVEEDOR);
                     itemSerialRepository.save(item);
 
-                    // 2. Registrar salida individual en Ledger
                     movReverso.setCantidad(1);
                     movReverso.setIdItemSerial(item.getIdItemSerial());
                     movimientoInventarioService.registrarMovimiento(movReverso);
                 }
             } else {
-                // Registrar salida grupal a granel en Ledger (Baja el stock local automáticamente)
                 movReverso.setCantidad(detalle.getCantidad());
                 movReverso.setIdItemSerial(null);
                 movimientoInventarioService.registrarMovimiento(movReverso);
             }
         }
 
-        return mapper.toResponseDTO(ingresoAnulado);
+        IngresoCompraResponseDTO response = mapper.toResponseDTO(ingresoAnulado);
+        this.enriquecerResponseDTOSeriales(response);
+        return response;
     }
 
     // --- BLOQUE 2: REPORTES DE INTELIGENCIA DE NEGOCIO (BI) ---
@@ -213,9 +213,37 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
         return repository.obtenerGastoPorProveedor();
     }
 
+    // =========================================================================================
+    // --- SUB-RUTINA DE ENRIQUECIMIENTO ARQUITECTÓNICO (FIX SERIALES EN MODAL) ---
+    // =========================================================================================
+
+    /**
+     * @description Inyecta de manera atómica las listas planas de strings correspondientes
+     * a los números de serie comprados para cada fila de detalle en el DTO de respuesta.
+     * Previene desborde de memoria operando directamente sobre el grafo de transferencia.
+     */
+    private void enriquecerResponseDTOSeriales(IngresoCompraResponseDTO responseDTO) {
+        if (responseDTO != null && responseDTO.getDetalles() != null) {
+            for (IngresoCompraResponseDTO.DetalleResponseDTO detalle : responseDTO.getDetalles()) {
+
+                // Consultamos las series físicas vinculadas a la clave primaria del detalle
+                List<ItemSerial> serialesFisicos = itemSerialRepository
+                        .findByDetalleIngreso_IdDetalleIngreso(detalle.getIdDetalleIngreso());
+
+                if (serialesFisicos != null && !serialesFisicos.isEmpty()) {
+                    // Mapeo limpio usando Java Streams
+                    List<String> codigosSerie = serialesFisicos.stream()
+                            .map(ItemSerial::getNumeroSerie)
+                            .collect(Collectors.toList());
+
+                    detalle.setNumerosSerie(codigosSerie);
+                }
+            }
+        }
+    }
 
     // =========================================================================================
-    // --- LÓGICAS PRIVADAS DE ORQUESTACIÓN Y VALIDACIÓN (CLEAN CODE) ---
+    // --- LÓGICAS PRIVADAS DE VALIDACIÓN (CLEAN CODE) ---
     // =========================================================================================
 
     private void validarMaestras(IngresoCompraRequestDTO dto) {
@@ -241,7 +269,6 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
             subtotalCalculado = subtotalCalculado.add(totalLinea);
         }
 
-        // 1. Validación Lógica Básica: A + B = C
         BigDecimal totalCalculado = subtotalCalculado.add(dto.getImpuesto()).setScale(2, RoundingMode.HALF_UP);
         BigDecimal totalEnviado = dto.getTotalCompra().setScale(2, RoundingMode.HALF_UP);
 
@@ -251,12 +278,9 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
                             ") suma " + totalCalculado + ", pero el total enviado es " + totalEnviado);
         }
 
-        // 2. Validación Tributaria Estricta (IGV 18% en Perú) con Tolerancia
-        // Calculamos cuánto DEBERÍA ser el impuesto ideal
         BigDecimal impuestoEsperado = subtotalCalculado.multiply(new BigDecimal("0.18")).setScale(2, RoundingMode.HALF_UP);
         BigDecimal impuestoEnviado = dto.getImpuesto().setScale(2, RoundingMode.HALF_UP);
 
-        // Permitimos una diferencia de máximo 0.15 céntimos (por redondeos del sistema del proveedor)
         BigDecimal diferencia = impuestoEsperado.subtract(impuestoEnviado).abs();
         BigDecimal tolerancia = new BigDecimal("0.15");
 
@@ -280,7 +304,6 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
                 if (det.getNumerosSerie().size() != det.getCantidad()) {
                     throw new BusinessException(HttpStatus.BAD_REQUEST, "ERR_SERIALES_MISMATCH", "La cantidad de producto (" + det.getCantidad() + ") no coincide con la cantidad de números de serie enviados (" + det.getNumerosSerie().size() + ").");
                 }
-                // Validar que no estemos ingresando un equipo (ej. Laptop robada/repetida) que ya existe físicamente en DB
                 for (String serial : det.getNumerosSerie()) {
                     if (itemSerialRepository.existsByProducto_IdProductoAndNumeroSerieIgnoreCase(producto.getIdProducto(), serial)) {
                         throw new BusinessException(HttpStatus.CONFLICT, "ERR_SERIAL_DUPLICADO", "El número de serie '" + serial + "' ya se encuentra registrado en el sistema para este producto.");
@@ -295,30 +318,22 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
     }
 
     private void orquestarEfectosColaterales(IngresoCompraRequestDTO dto, IngresoCompra compraGuardada, Long idUsuarioReal) {
-        // Necesitamos empatar los DTOs de Detalle con las entidades guardadas para obtener los IDs reales (idDetalleIngreso)
         for (int i = 0; i < dto.getDetalles().size(); i++) {
             IngresoCompraRequestDTO.DetalleRequestDTO detDto = dto.getDetalles().get(i);
-            DetalleIngreso detGuardado = compraGuardada.getDetalles().get(i); // Mantienen el mismo orden gracias a la List
+            DetalleIngreso detGuardado = compraGuardada.getDetalles().get(i);
 
-            Producto producto = productoRepository.findById(detDto.getIdProducto()).get(); // Ya validado
+            Producto producto = productoRepository.findById(detDto.getIdProducto()).get();
 
             if (Boolean.TRUE.equals(producto.getEsSerializado())) {
-                // Flujo A: Productos Serializados -> Genera N físicos, y N movimientos en el Ledger
                 for (String serialStr : detDto.getNumerosSerie()) {
-                    // 1. Crear Físico
                     ItemSerialResponseDTO serialCreado = crearItemSerialFisico(detDto.getIdProducto(), dto.getIdLocal(), serialStr, detGuardado.getIdDetalleIngreso());
-                    // 2. Pasamos el ID real
                     registrarMovimientoLedger(idUsuarioReal, dto.getIdLocal(), detDto.getIdProducto(), 1, serialCreado.getId(), compraGuardada);
                 }
             } else {
-                // Flujo B: Productos a Granel -> Genera 0 físicos, y 1 movimiento en bloque en el Ledger
-                // Pasamos el ID real
                 registrarMovimientoLedger(idUsuarioReal, dto.getIdLocal(), detDto.getIdProducto(), detDto.getCantidad(), null, compraGuardada);
             }
         }
     }
-
-    // --- Sub-rutinas de Delegación ---
 
     private ItemSerialResponseDTO crearItemSerialFisico(Long idProducto, Long idLocal, String numeroSerie, Long idDetalleIngreso) {
         ItemSerialRequestDTO serialReq = new ItemSerialRequestDTO();
@@ -327,7 +342,7 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
         serialReq.setNumeroSerie(numeroSerie);
         serialReq.setCondicion(Condicion.NUEVO);
         serialReq.setEstadoDisponibilidad(EstadoDisponibilidad.DISPONIBLE);
-        serialReq.setIdDetalleIngreso(idDetalleIngreso); // Trazabilidad estricta
+        serialReq.setIdDetalleIngreso(idDetalleIngreso);
 
         return itemSerialService.crear(serialReq);
     }
@@ -341,7 +356,7 @@ public class IngresoCompraServiceImpl implements IngresoCompraService {
         movReq.setIdLocalDestino(idLocalDestino);
         movReq.setIdProducto(idProducto);
         movReq.setCantidad(cantidad);
-        movReq.setIdItemSerial(idItemSerial); // Si es null, el Ledger sabrá que es a granel
+        movReq.setIdItemSerial(idItemSerial);
         movReq.setObservacion(String.format("ENTRADA AUTOMÁTICA por Compra. Factura: %s-%s. Proveedor: %s",
                 compra.getSerieComprobante(), compra.getNumeroComprobante(), razonSocial));
 

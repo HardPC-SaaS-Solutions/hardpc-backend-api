@@ -50,5 +50,6 @@ public class IngresoCompraResponseDTO {
         private String descripcionProducto;
         private Integer cantidad;
         private BigDecimal precioCompraUnitario;
+        private List<String> numerosSerie;
     }
 }
