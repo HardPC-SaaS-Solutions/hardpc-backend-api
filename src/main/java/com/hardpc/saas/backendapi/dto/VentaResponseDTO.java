@@ -54,5 +54,6 @@ public class VentaResponseDTO {
         private Integer cantidad;
         private BigDecimal precioVentaUnitario;
         private BigDecimal descuento;
+        private String numeroSerie;
     }
 }

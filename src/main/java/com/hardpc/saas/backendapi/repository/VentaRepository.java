@@ -20,18 +20,25 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
     boolean existsByTipoComprobante_IdTipoComprobanteAndSerieComprobanteAndNumeroComprobante(
             Long idTipoComprobante, String serie, String numero);
 
-    // --- Búsqueda Paginada Avanzada (CRÍTICO: Manejo dinámico de fechas con >= y <=) ---
+    // --- Búsqueda Paginada Avanzada ---
     @Query("SELECT v FROM Venta v WHERE " +
             "(:fechaInicio IS NULL OR v.fechaVenta >= :fechaInicio) AND " +
             "(:fechaFin IS NULL OR v.fechaVenta <= :fechaFin) AND " +
             "(:idCliente IS NULL OR v.cliente.idPersona = :idCliente) AND " +
-            "(:idLocal IS NULL OR v.local.idLocal = :idLocal) " +
+            "(:idLocal IS NULL OR v.local.idLocal = :idLocal) AND " +
+            "(:estado IS NULL OR v.estadoVenta = :estado) AND " +
+            "(:comprobante IS NULL OR " +
+            "  LOWER(v.serieComprobante) LIKE LOWER(CONCAT('%', :comprobante, '%')) OR " +
+            "  LOWER(v.numeroComprobante) LIKE LOWER(CONCAT('%', :comprobante, '%')) " +
+            ") " +
             "ORDER BY v.fechaVenta DESC")
     Page<Venta> buscarVentasAvanzado(
             @Param("fechaInicio") LocalDateTime fechaInicio,
             @Param("fechaFin") LocalDateTime fechaFin,
             @Param("idCliente") Long idCliente,
             @Param("idLocal") Long idLocal,
+            @Param("estado") com.hardpc.saas.backendapi.enums.EstadoVenta estado,
+            @Param("comprobante") String comprobante,
             Pageable pageable);
 
     // --- REPORTES FINANCIEROS (BI) ---

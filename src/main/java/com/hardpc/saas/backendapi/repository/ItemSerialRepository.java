@@ -39,4 +39,12 @@ public interface ItemSerialRepository extends JpaRepository<ItemSerial, Long> {
     Page<ItemSerial> buscarPaginadoAvanzado(@Param("buscar") String buscar, @Param("idLocal") Long idLocal, Pageable pageable);
 
     List<ItemSerial> findByDetalleIngreso_IdDetalleIngreso(Long idDetalleIngreso);
+
+    @Query("SELECT i.numeroSerie FROM ItemSerial i WHERE " +
+            "i.producto.idProducto = :idProducto AND " +
+            "i.local.idLocal = :idLocal AND " +
+            "i.estadoDisponibilidad = 'DISPONIBLE'")
+    List<String> findSeriesDisponiblesParaVenta(
+            @Param("idProducto") Long idProducto,
+            @Param("idLocal") Long idLocal);
 }
