@@ -49,8 +49,11 @@ public class VentaRestController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
             @RequestParam(required = false) Long idCliente,
             @RequestParam(required = false) Long idLocal,
+            @RequestParam(required = false) com.hardpc.saas.backendapi.enums.EstadoVenta estado,
+            @RequestParam(required = false) String comprobante,
             @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(service.listarPaginadoAvanzado(fechaInicio, fechaFin, idCliente, idLocal, pageable));
+
+        return ResponseEntity.ok(service.listarPaginadoAvanzado(fechaInicio, fechaFin, idCliente, idLocal, estado, comprobante, pageable));
     }
 
     // --- REPORTES FINANCIEROS Y DE AUDITORÍA (BI) ---

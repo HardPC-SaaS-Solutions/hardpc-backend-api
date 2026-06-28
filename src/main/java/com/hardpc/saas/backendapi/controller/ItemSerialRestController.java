@@ -93,4 +93,12 @@ public class ItemSerialRestController {
         service.cambiarEstado(id, nuevoEstado);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/disponibles")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'CAJERO')")
+    public ResponseEntity<List<String>> obtenerSeriesDisponibles(
+            @RequestParam Long idProducto,
+            @RequestParam Long idLocal) {
+        return ResponseEntity.ok(service.obtenerSeriesDisponibles(idProducto, idLocal));
+    }
 }
