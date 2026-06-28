@@ -22,4 +22,6 @@ public interface ItemSerialService {
     // Reportes
     List<ResumenEstadoSerialDTO> reporteEstadosAgrupados();
     Page<ItemSerialResponseDTO> listarDisponiblesPorLocal(Long idLocal, Pageable pageable);
+
+    List<String> obtenerSeriesDisponibles(Long idProducto, Long idLocal);
 }

@@ -86,6 +86,12 @@ public class ItemSerialServiceImpl implements ItemSerialService {
         return mapper.toResponseDTO(repository.save(existente));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> obtenerSeriesDisponibles(Long idProducto, Long idLocal) {
+        return repository.findSeriesDisponiblesParaVenta(idProducto, idLocal);
+    }
+
     // --- MÉTODOS OPERATIVOS ESPECIALES ---
 
     /**

@@ -54,8 +54,8 @@ public class VentaServiceImpl implements VentaService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<VentaResponseDTO> listarPaginadoAvanzado(LocalDateTime inicio, LocalDateTime fin, Long idCliente, Long idLocal, Pageable pageable) {
-        return repository.buscarVentasAvanzado(inicio, fin, idCliente, idLocal, pageable)
+    public Page<VentaResponseDTO> listarPaginadoAvanzado(LocalDateTime inicio, LocalDateTime fin, Long idCliente, Long idLocal, EstadoVenta estado, String comprobante, Pageable pageable) {
+        return repository.buscarVentasAvanzado(inicio, fin, idCliente, idLocal, estado, comprobante, pageable)
                 .map(mapper::toResponseDTO);
     }
 

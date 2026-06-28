@@ -60,5 +60,6 @@ public interface VentaMapper {
     @Mapping(source = "producto.idProducto", target = "idProducto")
     @Mapping(source = "producto.codigoSku", target = "codigoSkuProducto")
     @Mapping(source = "producto.descripcion", target = "descripcionProducto")
+    @Mapping(source = "itemSerial.numeroSerie", target = "numeroSerie")
     VentaResponseDTO.DetalleResponseDTO toDetalleResponseDTO(DetalleVenta entity);
 }
