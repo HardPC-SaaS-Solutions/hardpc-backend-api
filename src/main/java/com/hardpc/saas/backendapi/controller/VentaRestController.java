@@ -1,9 +1,6 @@
 package com.hardpc.saas.backendapi.controller;
 
-import com.hardpc.saas.backendapi.dto.IngresoMensualDTO;
-import com.hardpc.saas.backendapi.dto.VentaRequestDTO;
-import com.hardpc.saas.backendapi.dto.VentaResponseDTO;
-import com.hardpc.saas.backendapi.dto.VentasPorClienteDTO;
+import com.hardpc.saas.backendapi.dto.*;
 import com.hardpc.saas.backendapi.service.VentaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -72,6 +69,18 @@ public class VentaRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR')")
     public ResponseEntity<List<VentasPorClienteDTO>> obtenerReporteVentasPorCliente() {
         return ResponseEntity.ok(service.obtenerReporteVentasPorCliente());
+    }
+
+    @GetMapping("/reportes/top-productos")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR')")
+    public ResponseEntity<List<TopProductoDTO>> obtenerTopProductosVendidos() {
+        return ResponseEntity.ok(service.obtenerTopProductosVendidos());
+    }
+
+    @GetMapping("/reportes/rendimiento-cajeros")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR')")
+    public ResponseEntity<List<RendimientoCajeroDTO>> obtenerRendimientoCajeros() {
+        return ResponseEntity.ok(service.obtenerRendimientoCajeros());
     }
 
     // --- ANULACIÓN DE VENTA ---

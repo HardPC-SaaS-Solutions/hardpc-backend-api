@@ -1,6 +1,8 @@
 package com.hardpc.saas.backendapi.repository;
 
 import com.hardpc.saas.backendapi.dto.IngresoMensualDTO;
+import com.hardpc.saas.backendapi.dto.RendimientoCajeroDTO;
+import com.hardpc.saas.backendapi.dto.TopProductoDTO;
 import com.hardpc.saas.backendapi.dto.VentasPorClienteDTO;
 import com.hardpc.saas.backendapi.entity.Venta;
 import org.springframework.data.domain.Page;
@@ -45,7 +47,9 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
     // --- REPORTES FINANCIEROS (BI) ---
     @Query("SELECT new com.hardpc.saas.backendapi.dto.IngresoMensualDTO(" +
             "YEAR(v.fechaVenta), MONTH(v.fechaVenta), SUM(v.totalVenta), COUNT(v)) " +
-            "FROM Venta v GROUP BY YEAR(v.fechaVenta), MONTH(v.fechaVenta) " +
+            "FROM Venta v " +
+            "WHERE v.estadoVenta = 'REGISTRADA' " +
+            "GROUP BY YEAR(v.fechaVenta), MONTH(v.fechaVenta) " +
             "ORDER BY YEAR(v.fechaVenta) DESC, MONTH(v.fechaVenta) DESC")
     List<IngresoMensualDTO> obtenerIngresoMensual();
 
@@ -56,6 +60,21 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
             "FROM Venta v GROUP BY v.cliente.idPersona, v.cliente.numeroDocumento, v.cliente.nombres, v.cliente.apellidos, v.cliente.razonSocial " +
             "ORDER BY SUM(v.totalVenta) DESC")
     List<VentasPorClienteDTO> obtenerVentasPorCliente();
+
+    // 1. TOP 10 Productos Más Vendidos (Rotación de Inventario)
+    // Se usa Pageable para limitar los resultados desde el Service (ej. PageRequest.of(0, 10))
+    @Query("SELECT new com.hardpc.saas.backendapi.dto.TopProductoDTO(d.producto.idProducto, d.producto.descripcion, SUM(d.cantidad)) " +
+            "FROM DetalleVenta d WHERE d.venta.estadoVenta = 'REGISTRADA' " +
+            "GROUP BY d.producto.idProducto, d.producto.descripcion " +
+            "ORDER BY SUM(d.cantidad) DESC")
+    List<TopProductoDTO> obtenerTopProductosVendidos(Pageable pageable);
+
+    // 2. Rendimiento de Cajeros (Productividad)
+    @Query("SELECT new com.hardpc.saas.backendapi.dto.RendimientoCajeroDTO(v.usuario.idPersona, v.usuario.username, SUM(v.totalVenta), COUNT(v)) " +
+            "FROM Venta v WHERE v.estadoVenta = 'REGISTRADA' " +
+            "GROUP BY v.usuario.idPersona, v.usuario.username " +
+            "ORDER BY SUM(v.totalVenta) DESC")
+    List<RendimientoCajeroDTO> obtenerRendimientoCajeros();
 
     // Calcula el total vendido en efectivo por un cajero en un local específico desde que abrió la caja
     @Query("SELECT COALESCE(SUM(v.totalVenta), 0) FROM Venta v WHERE v.usuario.idPersona = :idUsuario AND v.local.idLocal = :idLocal AND v.formaPago.idFormaPago = 1 AND v.fechaVenta >= :fechaApertura AND v.estadoVenta = 'REGISTRADA'")

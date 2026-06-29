@@ -14,6 +14,7 @@ import com.hardpc.saas.backendapi.service.VentaService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -227,6 +228,19 @@ public class VentaServiceImpl implements VentaService {
     @Transactional(readOnly = true)
     public List<VentasPorClienteDTO> obtenerReporteVentasPorCliente() {
         return repository.obtenerVentasPorCliente();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TopProductoDTO> obtenerTopProductosVendidos() {
+        // Limitamos la consulta estrictamente al Top 10 desde el origen de datos
+        return repository.obtenerTopProductosVendidos(PageRequest.of(0, 10));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RendimientoCajeroDTO> obtenerRendimientoCajeros() {
+        return repository.obtenerRendimientoCajeros();
     }
 
     // =========================================================================================

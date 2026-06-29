@@ -1,9 +1,6 @@
 package com.hardpc.saas.backendapi.service;
 
-import com.hardpc.saas.backendapi.dto.IngresoMensualDTO;
-import com.hardpc.saas.backendapi.dto.VentaRequestDTO;
-import com.hardpc.saas.backendapi.dto.VentaResponseDTO;
-import com.hardpc.saas.backendapi.dto.VentasPorClienteDTO;
+import com.hardpc.saas.backendapi.dto.*;
 import com.hardpc.saas.backendapi.enums.EstadoVenta;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +16,12 @@ public interface VentaService {
     // BI (Business Intelligence)
     List<IngresoMensualDTO> obtenerReporteIngresoMensual();
     List<VentasPorClienteDTO> obtenerReporteVentasPorCliente();
+
+    // Recupera el top 10 de productos con mayor rotación/unidades vendidas.
+    List<TopProductoDTO> obtenerTopProductosVendidos();
+
+    // Evalúa la productividad y volúmenes de venta acumulados por cada cajero.
+    List<RendimientoCajeroDTO> obtenerRendimientoCajeros();
 
     // Operaciones Transaccionales
     VentaResponseDTO anularVenta(Long idVenta);
