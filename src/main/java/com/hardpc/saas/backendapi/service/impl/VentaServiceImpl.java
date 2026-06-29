@@ -26,6 +26,18 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.Rectangle;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+import java.io.ByteArrayOutputStream;
+import java.time.format.DateTimeFormatter;
+
 @Service
 @RequiredArgsConstructor
 public class VentaServiceImpl implements VentaService {
@@ -338,5 +350,178 @@ public class VentaServiceImpl implements VentaService {
                 venta.getSerieComprobante(), venta.getNumeroComprobante(), nombreCliente.trim()));
 
         movimientoInventarioService.registrarMovimiento(mov);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] generarTicketPdf(Long idVenta) {
+        Venta venta = repository.findById(idVenta)
+                .orElseThrow(() -> new EntityNotFoundException("Venta no encontrada con ID: " + idVenta));
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        // Configurar tamaño de ticket (Ancho de 80mm ~ 226 puntos, Altura dinámica alta)
+        Rectangle ticketSize = new Rectangle(226, 800);
+        Document document = new Document(ticketSize, 10, 10, 10, 10);
+
+        try {
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            // ── FUENTES ───────────────────────────────────────────────────────────
+            Font fontTitulo    = new Font(Font.HELVETICA, 12, Font.BOLD);
+            Font fontSubtitulo = new Font(Font.HELVETICA, 9,  Font.NORMAL);
+            Font fontDetalle   = new Font(Font.HELVETICA, 8,  Font.NORMAL);
+            Font fontBold      = new Font(Font.HELVETICA, 8,  Font.BOLD);
+            Font fontTotal     = new Font(Font.HELVETICA, 10, Font.BOLD);
+
+            Paragraph seccionDivisora = new Paragraph("----------------------------------------", fontSubtitulo);
+            seccionDivisora.setAlignment(Element.ALIGN_CENTER);
+
+            // ── 1. CABECERA DEL LOCAL ─────────────────────────────────────────────
+            Paragraph titulo = new Paragraph("HARDPC SOLUTIONS", fontTitulo);
+            titulo.setAlignment(Element.ALIGN_CENTER);
+            document.add(titulo);
+
+            Paragraph local = new Paragraph("Local: " + venta.getLocal().getNombre(), fontSubtitulo);
+            local.setAlignment(Element.ALIGN_CENTER);
+            document.add(local);
+
+            // RUC de la empresa (ajusta el valor según tu entidad)
+            Paragraph ruc = new Paragraph("RUC: 20123456789", fontSubtitulo);
+            ruc.setAlignment(Element.ALIGN_CENTER);
+            document.add(ruc);
+
+            document.add(seccionDivisora);
+
+            // ── 2. DATOS DEL COMPROBANTE ──────────────────────────────────────────
+            document.add(new Paragraph(venta.getTipoComprobante().getDescripcion().toUpperCase(), fontBold));
+            document.add(new Paragraph("Nro: " + venta.getSerieComprobante() + "-" + venta.getNumeroComprobante(), fontDetalle));
+            document.add(new Paragraph("Fecha: " + venta.getFechaVenta().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")), fontDetalle));
+            document.add(new Paragraph("Cajero: " + venta.getUsuario().getNombres() + venta.getUsuario().getApellidos(), fontDetalle));
+
+            // Forma de pago — dato clave para el cliente y auditoría
+            document.add(new Paragraph("Pago: " + venta.getFormaPago().getDescripcion(), fontDetalle));
+
+            document.add(seccionDivisora);
+
+            // ── 3. DATOS DEL CLIENTE ──────────────────────────────────────────────
+            String docCliente    = venta.getCliente().getNumeroDocumento();
+            String nombreCliente = venta.getCliente().getTipoCliente().name().equals("EMPRESA")
+                    ? venta.getCliente().getRazonSocial()
+                    : venta.getCliente().getNombres() + " " + venta.getCliente().getApellidos();
+
+            document.add(new Paragraph("Cliente: " + nombreCliente, fontDetalle));
+            document.add(new Paragraph("Doc: " + docCliente, fontDetalle));
+
+            document.add(seccionDivisora);
+
+            // ── 4. TABLA DE DETALLES ──────────────────────────────────────────────
+            // Columnas: Cant. | Descripción | P.Unit | Total Línea
+            PdfPTable table = new PdfPTable(4);
+            table.setWidthPercentage(100);
+            table.setWidths(new float[]{1.0f, 3.2f, 1.4f, 1.4f});
+
+            // Cabecera de columnas
+            for (String header : new String[]{"Cant.", "Descripción", "P.Unit", "Total"}) {
+                PdfPCell hCell = new PdfPCell(new Phrase(header, fontBold));
+                hCell.setBorder(Rectangle.BOTTOM);
+                hCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(hCell);
+            }
+
+            for (DetalleVenta det : venta.getDetalles()) {
+
+                // Cantidad
+                PdfPCell c1 = new PdfPCell(new Paragraph(det.getCantidad() + "x", fontDetalle));
+                c1.setBorder(Rectangle.NO_BORDER);
+                table.addCell(c1);
+
+                // Descripción + N/S si es serializado
+                String desc = det.getProducto().getDescripcion();
+                if (det.getItemSerial() != null) {
+                    desc += "\nS/N: " + det.getItemSerial().getNumeroSerie();
+                }
+                PdfPCell c2 = new PdfPCell(new Paragraph(desc, fontDetalle));
+                c2.setBorder(Rectangle.NO_BORDER);
+                table.addCell(c2);
+
+                // Precio unitario
+                PdfPCell c3 = new PdfPCell(new Paragraph("S/ " + det.getPrecioVentaUnitario().setScale(2, java.math.RoundingMode.HALF_UP), fontDetalle));
+                c3.setBorder(Rectangle.NO_BORDER);
+                c3.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                table.addCell(c3);
+
+                // Subtotal de la línea (cantidad × precio − descuento)
+                BigDecimal subFila = det.getPrecioVentaUnitario()
+                        .multiply(new BigDecimal(det.getCantidad()))
+                        .subtract(det.getDescuento());
+                PdfPCell c4 = new PdfPCell(new Paragraph("S/ " + subFila.setScale(2, java.math.RoundingMode.HALF_UP), fontDetalle));
+                c4.setBorder(Rectangle.NO_BORDER);
+                c4.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                table.addCell(c4);
+            }
+
+            document.add(table);
+            document.add(seccionDivisora);
+
+            // ── 5. BLOQUE DE TOTALES DESGLOSADOS ─────────────────────────────────
+            // Requerimiento legal peruano: IGV debe mostrarse por separado en el comprobante.
+            BigDecimal totalVenta  = venta.getTotalVenta();
+            BigDecimal igv         = venta.getImpuesto();
+            BigDecimal subtotalNeto = totalVenta.subtract(igv);
+
+            PdfPTable tablaTotales = new PdfPTable(2);
+            tablaTotales.setWidthPercentage(100);
+
+            // Fila Subtotal
+            agregarFilaTotales(tablaTotales, "Subtotal:", "S/ " + subtotalNeto.setScale(2, java.math.RoundingMode.HALF_UP), fontDetalle);
+
+            // Fila IGV
+            agregarFilaTotales(tablaTotales, "IGV (18%):", "S/ " + igv.setScale(2, java.math.RoundingMode.HALF_UP), fontDetalle);
+
+            // Fila Total — destacado visualmente
+            agregarFilaTotales(tablaTotales, "TOTAL A COBRAR:", "S/ " + totalVenta.setScale(2, java.math.RoundingMode.HALF_UP), fontTotal);
+
+            document.add(tablaTotales);
+
+            // ── 6. PIE DE PÁGINA ──────────────────────────────────────────────────
+            document.add(seccionDivisora);
+
+            Paragraph gracias = new Paragraph("¡Gracias por su preferencia!", fontSubtitulo);
+            gracias.setAlignment(Element.ALIGN_CENTER);
+            document.add(gracias);
+
+            // Datos de contacto de la empresa
+            Paragraph contacto = new Paragraph("Tel: 044-123456  |  hardpc@email.com", fontDetalle);
+            contacto.setAlignment(Element.ALIGN_CENTER);
+            document.add(contacto);
+
+            Paragraph web = new Paragraph("www.hardpc.com.pe", fontDetalle);
+            web.setAlignment(Element.ALIGN_CENTER);
+            document.add(web);
+
+            document.close();
+
+        } catch (Exception e) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "ERR_PDF_GENERACION", "Error al construir el archivo PDF del ticket.");
+        }
+
+        return out.toByteArray();
+    }
+
+    /**
+     * Inserta una fila de dos celdas sin borde en la tabla de totales.
+     * Columna izquierda: etiqueta. Columna derecha: monto alineado a la derecha.
+     */
+    private void agregarFilaTotales(PdfPTable tabla, String etiqueta, String monto, Font font) {
+        PdfPCell celdaEtiqueta = new PdfPCell(new Paragraph(etiqueta, font));
+        celdaEtiqueta.setBorder(Rectangle.NO_BORDER);
+        tabla.addCell(celdaEtiqueta);
+
+        PdfPCell celdaMonto = new PdfPCell(new Paragraph(monto, font));
+        celdaMonto.setBorder(Rectangle.NO_BORDER);
+        celdaMonto.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        tabla.addCell(celdaMonto);
     }
 }

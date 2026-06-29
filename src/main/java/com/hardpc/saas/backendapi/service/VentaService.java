@@ -22,4 +22,6 @@ public interface VentaService {
 
     // Operaciones Transaccionales
     VentaResponseDTO anularVenta(Long idVenta);
+
+    byte[] generarTicketPdf(Long idVenta);
 }

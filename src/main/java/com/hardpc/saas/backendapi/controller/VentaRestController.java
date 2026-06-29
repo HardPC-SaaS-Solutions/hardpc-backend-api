@@ -19,6 +19,10 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ContentDisposition;
+
 @RestController
 @RequestMapping("/api/ventas")
 @RequiredArgsConstructor
@@ -76,5 +80,19 @@ public class VentaRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR')")
     public ResponseEntity<VentaResponseDTO> anularVenta(@PathVariable Long id) {
         return ResponseEntity.ok(service.anularVenta(id));
+    }
+
+    // --- IMPRESIÓN DE TICKETS ---
+    @GetMapping("/{id}/ticket")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'OPERATIVO', 'CAJERO')")
+    public ResponseEntity<byte[]> generarTicketPdf(@PathVariable Long id) {
+        byte[] pdfBytes = service.generarTicketPdf(id);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        // "inline" indica al navegador que debe abrirlo en el visor integrado en vez de forzar descarga ciega
+        headers.setContentDisposition(ContentDisposition.inline().filename("Ticket_Venta_HardPC_" + id + ".pdf").build());
+
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 }
