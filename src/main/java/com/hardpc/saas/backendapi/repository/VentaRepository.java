@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -55,4 +56,12 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
             "FROM Venta v GROUP BY v.cliente.idPersona, v.cliente.numeroDocumento, v.cliente.nombres, v.cliente.apellidos, v.cliente.razonSocial " +
             "ORDER BY SUM(v.totalVenta) DESC")
     List<VentasPorClienteDTO> obtenerVentasPorCliente();
+
+    // Calcula el total vendido en efectivo por un cajero en un local específico desde que abrió la caja
+    @Query("SELECT COALESCE(SUM(v.totalVenta), 0) FROM Venta v WHERE v.usuario.idPersona = :idUsuario AND v.local.idLocal = :idLocal AND v.formaPago.idFormaPago = 1 AND v.fechaVenta >= :fechaApertura AND v.estadoVenta = 'REGISTRADA'")
+    BigDecimal sumarVentasEfectivoEnTurno(
+            @Param("idUsuario") Long idUsuario,
+            @Param("idLocal") Long idLocal,
+            @Param("fechaApertura") LocalDateTime fechaApertura
+    );
 }
