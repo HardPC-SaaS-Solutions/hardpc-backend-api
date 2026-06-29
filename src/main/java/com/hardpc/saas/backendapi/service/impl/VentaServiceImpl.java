@@ -2,6 +2,7 @@ package com.hardpc.saas.backendapi.service.impl;
 
 import com.hardpc.saas.backendapi.dto.*;
 import com.hardpc.saas.backendapi.entity.*;
+import com.hardpc.saas.backendapi.enums.EstadoCaja;
 import com.hardpc.saas.backendapi.enums.EstadoDisponibilidad;
 import com.hardpc.saas.backendapi.enums.EstadoVenta;
 import com.hardpc.saas.backendapi.enums.TipoMovimiento;
@@ -51,6 +52,7 @@ public class VentaServiceImpl implements VentaService {
     private final ProductoRepository productoRepository;
     private final ItemSerialRepository itemSerialRepository;
     private final StockLocalRepository stockLocalRepository; // PROACTIVIDAD: Validar stock a granel
+    private final CajaSesionRepository cajaSesionRepository;
 
     // Orquestación
     private final MovimientoInventarioService movimientoInventarioService;
@@ -82,6 +84,15 @@ public class VentaServiceImpl implements VentaService {
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
         Usuario cajeroLogueado = userDetails.getUsuario();
         // ---------------------------------------------------------------
+
+        // ✨ NUEVO BLINDAJE DE SEGURIDAD: Verificar Arqueo de Caja
+        CajaSesion cajaAbierta = cajaSesionRepository.findByUsuario_IdPersonaAndEstado(cajeroLogueado.getIdPersona(), EstadoCaja.ABIERTA)
+                .orElseThrow(() -> new BusinessException(HttpStatus.FORBIDDEN, "ERR_CAJA_CERRADA", "Acceso denegado: Debe aperturar una caja antes de procesar ventas."));
+
+        // ✨ REGLA ARQUITECTÓNICA: La venta debe ocurrir obligatoriamente en el local donde se abrió la caja
+        if (!cajaAbierta.getLocal().getIdLocal().equals(dto.getIdLocal())) {
+            throw new BusinessException(HttpStatus.CONFLICT, "ERR_CAJA_LOCAL_MISMATCH", "Inconsistencia: Su caja activa pertenece a otro local. Cierre su caja actual primero.");
+        }
 
         // 1. Validaciones Maestras y Ligeras
         validarMaestras(dto);
@@ -398,7 +409,7 @@ public class VentaServiceImpl implements VentaService {
             document.add(new Paragraph(venta.getTipoComprobante().getDescripcion().toUpperCase(), fontBold));
             document.add(new Paragraph("Nro: " + venta.getSerieComprobante() + "-" + venta.getNumeroComprobante(), fontDetalle));
             document.add(new Paragraph("Fecha: " + venta.getFechaVenta().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")), fontDetalle));
-            document.add(new Paragraph("Cajero: " + venta.getUsuario().getNombres() + venta.getUsuario().getApellidos(), fontDetalle));
+            document.add(new Paragraph("Cajero: " + venta.getUsuario().getNombres() + " " + venta.getUsuario().getApellidos(), fontDetalle));
 
             // Forma de pago — dato clave para el cliente y auditoría
             document.add(new Paragraph("Pago: " + venta.getFormaPago().getDescripcion(), fontDetalle));
